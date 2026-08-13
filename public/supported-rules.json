@@ -637,13 +637,6 @@
     "solution": "Page's HTML code loads slowly when it is not optimized or when the web server is slow. Make sure the HTML code is optimized on all of your pages. If this issue persists, consider moving your website to a faster server."
   },
   {
-    "code": "UXP-002",
-    "name": "Content is not sized correctly",
-    "category": "Usability and performance",
-    "details": "The content of your page is not sized correctly for the viewport. When your page's content width is smaller or larger than the viewport width, it may not render correctly on mobile screens. Detect this issue with a Lighthouse mobile audit using the PageSpeed Insights API.",
-    "solution": "Make sure that the page uses relative width and position values for CSS elements, and make sure images can scale as well. See Google's Responsive Web Design Basics for an overview of how to create a mobile-friendly page."
-  },
-  {
     "code": "UXP-003",
     "name": "Document uses plugins",
     "category": "Usability and performance",
@@ -670,13 +663,6 @@
     "category": "Usability and performance",
     "details": "Pages that do not use text compression. To reduce the size of data transferred from the web server to the user's browser, compression should be used for text-based assets: CSS, JavaScript, and HTML.",
     "solution": "All browsers today support GZIP compression, so make sure your server is configured to enable GZIP. Other widely supported compression algorithms are Brotli and deflate."
-  },
-  {
-    "code": "UXP-012",
-    "name": "Tap targets too small or too close together",
-    "category": "Usability and performance",
-    "details": "Interactive elements like buttons and links should be large enough (48x48px), or have enough space around them, to be easy enough to tap without overlapping onto other elements. Detect this issue with a Lighthouse mobile audit using the PageSpeed Insights API.",
-    "solution": "Make sure that your touch targets are not closer together than an average fingertip width, or that your fingertip can't span multiple link targets. Read more in Accessible Tap Targets."
   },
   {
     "code": "UXP-013",
@@ -966,13 +952,6 @@
     "solution": "Check that you do not have a firewall or plugin blocking bots; and if you do, to whitelist our AhrefsSiteAudit user-agent on that system. Allow the verified crawler IP ranges when the security layer requires an IP allowlist."
   },
   {
-    "code": "OTH-010",
-    "name": "Pages to submit to IndexNow",
-    "category": "Other",
-    "details": "IndexNow is a free protocol that enables website owners to inform search engines about the latest content updates, additions, or removals on their sites. By notifying search engines about these changes, you can ensure that they are aware of the updates instantly, rather than waiting for their bots to crawl and discover the changes themselves. This issue automatically selects pages that we recommend to submit to IndexNow. It includes: Indexable pages with content changes New indexable pages that were previously non-indexable or missing from the site Pages that have been removed or redirected",
-    "solution": "Submit newly created, materially updated, removed, or redirected URLs through IndexNow. Record the submitted URL, submission time, HTTP response, and retry status. Do not submit unchanged URLs."
-  },
-  {
     "code": "OTH-012",
     "name": "More than three parameters in URL",
     "category": "Other",
@@ -985,13 +964,6 @@
     "category": "Other",
     "details": "The configured audit crawler user-agent is disallowed from crawling the entire domain by robots.txt.",
     "solution": "If the block is intentional, record the domain as unavailable for auditing. Otherwise, remove the domain-wide Disallow rule for the configured crawler user-agent. You can add the following lines into the robots.txt file on your server to allow crawling: User-agent: SeoAuditBot Allow: /"
-  },
-  {
-    "code": "OTH-018",
-    "name": "Structured data has schema.org validation error",
-    "category": "Other",
-    "details": "Structured data is a standardized way to provide information about a web page. It helps search engines to understand your content and better represent it in the search results. Structured data needs to conform to the schema.org markup format. Some pages on your site have structured data that does not meet the schema vocabulary and guidelines.",
-    "solution": "Validate each affected item against the current Schema.org vocabulary. Correct unsupported properties, invalid types, value formats, and nesting in JSON-LD, Microdata, or RDFa."
   },
   {
     "code": "AIX-002",
@@ -1043,13 +1015,6 @@
     "solution": "Testar todas as variantes HTTP (domínio, idioma, trailing slash, parâmetros e redirects) e comparar headers. Centralizar a política de robots no servidor/CDN e incluir um teste automático que falhe quando HTML e headers se contradizem."
   },
   {
-    "code": "AIX-009",
-    "name": "Conteúdo principal só aparece depois de JavaScript",
-    "category": "Indexação e citação em sistemas de IA",
-    "details": "Renderização JavaScript pode funcionar, mas é mais frágil: depende do crawler conseguir executar os scripts, carregar APIs e não ser bloqueado por cookies, geolocalização ou autenticação. Se o HTML inicial tiver apenas um spinner, o conteúdo fica difícil de descobrir e validar.",
-    "solution": "Entregar no HTML inicial o título, resumo, factos, preço, disponibilidade, headings e links principais (SSR/SSG ou renderização no servidor). Usar JavaScript para interação, filtros e carrinho, não para esconder toda a informação indexável. Comparar HTML bruto e DOM renderizado."
-  },
-  {
     "code": "AIX-012",
     "name": "Canonical aponta para outra página ou existe cadeia de redirects",
     "category": "Indexação e citação em sistemas de IA",
@@ -1078,20 +1043,6 @@
     "solution": "Definir uma URL canonical por variante, usar hreflang recíproco para PT/ES, alinhar lang do HTML e manter parâmetros de filtros fora do índice quando não criam conteúdo único. Cada idioma deve ter texto realmente correspondente e dados comerciais corretos."
   },
   {
-    "code": "AIX-025",
-    "name": "Regra de segurança permite qualquer pedido que imita um bot",
-    "category": "Indexação e citação em sistemas de IA",
-    "details": "Autorizar todo o tráfego com User-Agent: Googlebot, OAI-SearchBot ou PerplexityBot abre espaço para spoofing e pode expor áreas privadas. O user-agent é apenas um sinal.",
-    "solution": "Separar allowlist por crawler e caminho público, validar IP/origem segundo a documentação atual de cada fornecedor, limitar métodos a GET/HEAD, aplicar rate limits razoáveis e manter logs/alertas. Rever automaticamente as listas de IP, pois podem mudar."
-  },
-  {
-    "code": "AIX-027",
-    "name": "Google-Extended é confundido com o controlo de indexação do Google Search",
-    "category": "Indexação e citação em sistemas de IA",
-    "details": "Google-Extended é um controlo separado para limitar usos em determinados sistemas de IA da Google. Não é um requisito para AI Overviews/AI Mode e não substitui Googlebot, noindex ou as diretivas de preview. Bloqueá-lo ou permiti-lo não garante nem impede, por si só, a presença nos resultados de pesquisa.",
-    "solution": "Decidir a política de Google-Extended separadamente da política de rastreamento do Google Search. Para aparecer em pesquisa, manter a página tecnicamente elegível para o Googlebot; para limitar usos específicos fora da pesquisa, aplicar a diretiva documentada sem bloquear acidentalmente o conteúdo público."
-  },
-  {
     "code": "PRD-001",
     "name": "Product snippet sem propriedades mínimas",
     "category": "Product snippets",
@@ -1118,13 +1069,6 @@
     "category": "Product snippets",
     "details": "A Offer não contém preço ativo maior que zero para Merchant listings, usa formato inválido ou não associa priceCurrency em código ISO 4217.",
     "solution": "Gerar price e priceCurrency a partir da mesma fonte usada na interface. Usar ponto decimal, sem símbolo monetário, e atualizar ou remover priceValidUntil expirado."
-  },
-  {
-    "code": "PRD-007",
-    "name": "JSON-LD do produto disponível apenas após JavaScript",
-    "category": "Product snippets",
-    "details": "O objeto Product ou os seus valores só são inseridos após execução no cliente, tornando a recolha menos previsível e podendo atrasar atualizações de preço e stock.",
-    "solution": "Emitir o JSON-LD completo no HTML inicial por SSR/SSG, usando os mesmos dados do produto renderizado. Comparar o HTML bruto com o DOM final."
   },
   {
     "code": "MER-001",
@@ -1190,13 +1134,6 @@
     "solution": "Usar um número de segundos adequado ou max-video-preview:-1 quando forem desejadas pré-visualizações em movimento sem limite definido pelo site."
   },
   {
-    "code": "GSA-011",
-    "name": "Deep link para a passagem relevante é bloqueado",
-    "category": "Apresentação nos resultados do Google",
-    "details": "O conteúdo-alvo está oculto numa tab ou accordion, JavaScript força o scroll para o topo ou remove o fragmento ... através da History API. Isto pode impedir que um resultado abra diretamente na passagem relevante. Referência oficial.",
-    "solution": "Tornar o conteúdo-alvo imediatamente acessível, abrir automaticamente o componente que o contém e preservar o fragmento e a posição de scroll no carregamento."
-  },
-  {
     "code": "GSA-013",
     "name": "Tradução automática desativada involuntariamente",
     "category": "Apresentação nos resultados do Google",
@@ -1246,13 +1183,6 @@
     "solution": "Usar ISO 8601 com offset correto quando a hora for declarada. Reservar datePublished e dateModified às datas editoriais reais e representar acontecimentos com Event."
   },
   {
-    "code": "GIM-001",
-    "name": "Imagem indexável implementada apenas em CSS",
-    "category": "Google Images e Discover",
-    "details": "Uma imagem importante existe apenas em background-image ou outra propriedade CSS. O Google Images descobre imagens em src de e não indexa imagens CSS como conteúdo da página. Referência oficial.",
-    "solution": "Inserir a imagem num elemento ; manter CSS apenas para apresentação."
-  },
-  {
     "code": "GIM-002",
     "name": "Imagem responsiva sem fallback src",
     "category": "Google Images e Discover",
@@ -1267,25 +1197,11 @@
     "solution": "Converter para formato suportado, alinhar extensão e MIME e reutilizar um URL canónico, estável e persistente para o mesmo recurso."
   },
   {
-    "code": "GIM-004",
-    "name": "Imagens importantes não são descobertas",
-    "category": "Google Images e Discover",
-    "details": "Imagens são carregadas por mecanismos não rastreáveis e não aparecem no HTML nem num image sitemap. Quando o sitemap aponta para uma CDN não verificada, os erros de rastreamento dessa propriedade podem passar despercebidos. Referência oficial.",
-    "solution": "Usar , incluir imagens difíceis de descobrir num image sitemap e verificar o domínio da CDN no Search Console."
-  },
-  {
     "code": "VID-001",
     "name": "Vídeo não incorporado num elemento reconhecido",
     "category": "Vídeo na Pesquisa Google",
     "details": "O vídeo não aparece no HTML renderizado através de , , ou , ou depende de um fragmento ... para ser descoberto. Referência oficial.",
     "solution": "Usar um elemento reconhecido e disponibilizar a página e o recurso em URLs HTTP(S) completos e rastreáveis."
-  },
-  {
-    "code": "VID-002",
-    "name": "Vídeo depende de interação ou desaparece quando a API falha",
-    "category": "Vídeo na Pesquisa Google",
-    "details": "O player só é criado após clique, swipe, escrita ou outra ação; quando JavaScript ou Media Source API falha, nenhum container permanece no DOM renderizado. Referência oficial.",
-    "solution": "Renderizar o container e os metadados sem exigir interação e mantê-los no DOM mesmo quando a origem multimédia falhar."
   },
   {
     "code": "VID-004",
@@ -1391,13 +1307,6 @@
     "category": "Dados estruturados — regras gerais",
     "details": "A página exibe vários itens, comentários ou avaliações, mas o markup descreve apenas uma parte seletiva. Isto pode ser enganador quando o rich result sugere cobertura completa. Referência oficial.",
     "solution": "Marcar todos os itens visíveis aplicáveis e manter contagens e agregações consistentes com o conjunto completo."
-  },
-  {
-    "code": "SDG-009",
-    "name": "Dados estruturados gerados por JavaScript divergem da página",
-    "category": "Dados estruturados — regras gerais",
-    "details": "JSON-LD criado por JavaScript ou Google Tag Manager duplica dados manualmente e não acompanha alterações do conteúdo, ou não existe no DOM renderizado. Em produtos com preço e disponibilidade voláteis, a geração dinâmica pode tornar os crawls de Shopping menos frequentes e menos fiáveis. Referência oficial.",
-    "solution": "Extrair os valores da mesma fonte que renderiza a página, preferir HTML inicial ou server-side rendering para dados comerciais voláteis e testar o URL publicado no Rich Results Test e na URL Inspection."
   },
   {
     "code": "EDS-001",
@@ -1694,13 +1603,6 @@
     "solution": "Criar um WebPageElement não aninhado por secção, com seletor de classe exato e isAccessibleForFree:false."
   },
   {
-    "code": "WST-001",
-    "name": "Web Story AMP inválida",
-    "category": "Web Stories",
-    "details": "A Web Story falha no Web Stories Google Test Tool, URL Inspection ou AMP Linter e, por isso, não cumpre as especificações AMP obrigatórias. Referência oficial.",
-    "solution": "Corrigir todos os erros AMP e repetir os testes no URL publicado."
-  },
-  {
     "code": "WST-002",
     "name": "Metadados obrigatórios da Web Story ausentes",
     "category": "Web Stories",
@@ -1727,13 +1629,6 @@
     "category": "Web Stories",
     "details": "O título tem 90 ou mais caracteres, o poster mede menos de 640×853 px ou não usa proporção 3:4, ou o logo mede menos de 96×96 px ou não usa proporção 1:1. O Google recomenda título descritivo com menos de 70 caracteres. Referência oficial.",
     "solution": "Manter o título abaixo de 90 caracteres, preferencialmente abaixo de 70, usar poster 3:4 com pelo menos 640×853 px e logo quadrado com pelo menos 96×96 px."
-  },
-  {
-    "code": "FEA-002",
-    "name": "Preferred Sources tratado como recurso de subdiretório",
-    "category": "Funcionalidades Google especializadas",
-    "details": "Uma publicação tenta usar a funcionalidade Preferred Sources para um subdiretório. Apenas sites ao nível de domínio e subdomínio são elegíveis; a seleção depende do utilizador e não existe marcação técnica para garanti-la. Referência oficial.",
-    "solution": "Usar o hostname elegível e, quando a publicação aparecer na ferramenta, fornecer o deeplink https://google.com/preferences/source?q=DOMINIO ou um botão para o utilizador escolher a fonte."
   },
   {
     "code": "ECM-002",

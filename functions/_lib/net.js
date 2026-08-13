@@ -64,7 +64,7 @@ export async function fetchLimited(value, options = {}) {
         contentType: response.headers.get('content-type')?.toLowerCase() ?? '',
         contentLength: contentLength || data.bytes.byteLength,
         bytes: data.bytes,
-        text: isText(response.headers.get('content-type')) ? new TextDecoder().decode(data.bytes) : '',
+        text: options.forceText || isText(response.headers.get('content-type')) ? new TextDecoder().decode(data.bytes) : '',
         truncated: data.truncated || contentLength > maxBytes,
         redirects,
         elapsedMs: Date.now() - started,

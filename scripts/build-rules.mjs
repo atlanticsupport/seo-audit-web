@@ -34,9 +34,11 @@ if (rules.length !== 288) throw new Error(`Esperados 288 problemas diretos; enco
 
 const output = `// Gerado a partir de docs/seo-audit-catalogo-unificado.md. Não editar.\nexport const RULES = ${JSON.stringify(rules, null, 2)};\n`;
 await writeFile(new URL('../functions/_lib/rules.generated.js', import.meta.url), output);
-await writeFile(new URL('../public/rules.json', import.meta.url), `${JSON.stringify(rules, null, 2)}\n`);
+const { supportedCodes } = await import(`../functions/_lib/evaluate.js?build=${Date.now()}`);
+const supported = new Set(supportedCodes());
+await writeFile(new URL('../public/supported-rules.json', import.meta.url), `${JSON.stringify(rules.filter(rule => supported.has(rule.code)), null, 2)}\n`);
 
-console.log(`${rules.length} regras diretas geradas.`);
+console.log(`${rules.length} regras diretas e ${supported.size} detetores executáveis gerados.`);
 
 function clean(value) {
   return value

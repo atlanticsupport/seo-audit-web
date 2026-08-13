@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { parsePage } from '../functions/_lib/html.js';
 import { publicUrl } from '../functions/_lib/net.js';
@@ -10,6 +11,12 @@ test('o registo contém 288 problemas diretos e 273 detetores executáveis neste
   assert.equal(new Set(RULES.map(rule => rule.code)).size, 288);
   assert.equal(supportedCodes().length, 273);
   assert.ok(supportedCodes().every(code => RULES.some(rule => rule.code === code)));
+});
+
+test('a interface recebe apenas as 273 regras com detetor', async () => {
+  const rules = JSON.parse(await readFile(new URL('../public/supported-rules.json', import.meta.url), 'utf8'));
+  assert.equal(rules.length, 273);
+  assert.deepEqual(rules.map(rule => rule.code).sort(), supportedCodes());
 });
 
 test('endereços privados e protocolos impróprios são recusados', () => {

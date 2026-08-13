@@ -1,112 +1,94 @@
 import { fetchLimited, publicUrl } from './net.js';
 import { parsePage } from './html.js';
 
-const MAX_PAGES = 8;
-const MAX_SITEMAPS = 3;
-const MAX_TARGETS = 10;
-const MAX_ASSETS = 12;
+const PAGE_BATCH = 5;
+const SITEMAP_BATCH = 3;
+const FETCH_BATCH = 20;
 
-export async function collectSite(value) {
+export async function bootstrapSite(value) {
   const start = publicUrl(value);
   const robotsUrl = new URL('/robots.txt', start).href;
-  const [firstResponse, robotsResponse] = await Promise.all([
+  const [first, robotsResponse, ...botResponses] = await Promise.all([
     fetchLimited(start, { maxBytes: 2_100_000 }),
-    fetchLimited(robotsUrl, { maxBytes: 600_000, accept: 'text/plain,*/*;q=0.5' })
+    fetchLimited(robotsUrl, { maxBytes: 600_000, accept: 'text/plain,*/*;q=0.5', forceText: true }),
+    ...Object.values(BOT_AGENTS).map(userAgent => fetchLimited(start, { userAgent, maxBytes: 100_000 }))
   ]);
-  if (!firstResponse.status && firstResponse.error) throw new Error('Não foi possível aceder ao URL indicado.');
-
-  const origin = new URL(firstResponse.finalUrl).origin;
+  if (!first.status && first.error) throw new Error('Não foi possível aceder ao URL indicado.');
+  const origin = new URL(first.finalUrl).origin;
   const robots = parseRobots(robotsResponse);
-  const sitemapSeeds = [...new Set([...robots.sitemaps, new URL('/sitemap.xml', origin).href])].slice(0, MAX_SITEMAPS);
-  const sitemapResponses = await Promise.all(sitemapSeeds.map(url => safeFetch(url, { maxBytes: 1_100_000, accept: 'application/xml,text/xml,*/*;q=0.5' })));
-  const sitemaps = sitemapResponses.map((response, index) => parseSitemap(sitemapSeeds[index], response));
-  const childSitemaps = sitemaps.flatMap(sitemap => sitemap.kind === 'index' ? sitemap.urls : []).slice(0, Math.max(0, MAX_SITEMAPS - sitemaps.length));
-  for (const response of await Promise.all(childSitemaps.map(url => safeFetch(url, { maxBytes: 1_100_000, accept: 'application/xml,text/xml,*/*;q=0.5' })))) {
-    sitemaps.push(parseSitemap(response.requestedUrl, response));
-  }
-
-  const pages = [];
-  const pageResponses = new Map([[normalize(firstResponse.requestedUrl), firstResponse], [normalize(firstResponse.finalUrl), firstResponse]]);
-  const queued = new Set([normalize(firstResponse.finalUrl)]);
-  const queue = [firstResponse];
-  const sitemapPageUrls = sitemaps.flatMap(sitemap => sitemap.kind === 'urlset' ? sitemap.urls : []).filter(url => sameOrigin(url, origin));
-
-  while (queue.length && pages.length < MAX_PAGES) {
-    const response = queue.shift();
-    if (!response?.text || !htmlResponse(response)) continue;
-    const page = parsePage(response);
-    pages.push(page);
-    const candidates = [...page.links.map(link => link.url), ...sitemapPageUrls]
-      .filter(url => sameOrigin(url, origin) && likelyPage(url))
-      .map(normalize)
-      .filter(url => !queued.has(url));
-    const batch = candidates.slice(0, Math.min(3, MAX_PAGES - pages.length));
-    batch.forEach(url => queued.add(url));
-    const fetched = await Promise.all(batch.map(url => safeFetch(url, { maxBytes: 2_100_000 })));
-    for (const item of fetched) {
-      pageResponses.set(normalize(item.requestedUrl), item);
-      pageResponses.set(normalize(item.finalUrl), item);
-      queue.push(item);
-    }
-  }
-
-  const allLinks = unique(pages.flatMap(page => [...page.links.map(link => link.url), ...page.canonical, ...page.hreflang.map(item => item.url)]));
-  const uncheckedInternal = allLinks.filter(url => sameOrigin(url, origin) && !pageResponses.has(normalize(url))).slice(0, MAX_TARGETS);
-  const external = allLinks.filter(url => !sameOrigin(url, origin)).slice(0, 5);
-  const targetResponses = await Promise.all([...uncheckedInternal, ...external].map(url => safeFetch(url, { maxBytes: 50_000 })));
-  const targets = new Map(targetResponses.map(response => [normalize(response.requestedUrl), response]));
-
-  const assets = mergeAssets(pages.flatMap(page => [
-    ...page.icons.map(url => ({ url, kind: 'icon' })),
-    ...structuredUrls(page).map(url => ({ url, kind: 'structured' })),
-    ...page.videos.flatMap(video => [video.src, video.poster, ...video.sources.map(source => source.src)].filter(Boolean).map(url => ({ url: new URL(url, page.url).href, kind: 'video' }))),
-    ...page.css.map(url => ({ url, kind: 'css' })),
-    ...page.js.map(url => ({ url, kind: 'js' })),
-    ...page.imageUrls.map(url => ({ url, kind: 'image' }))
-  ])).slice(0, MAX_ASSETS);
-  const assetResponses = await Promise.all(assets.map(asset => safeFetch(asset.url, {
-    maxBytes: asset.kinds.some(kind => kind === 'css' || kind === 'js') ? 500_000 : 70_000,
-    headers: asset.kinds.every(kind => ['image', 'icon', 'video'].includes(kind)) ? { range: 'bytes=0-65535' } : undefined,
-    accept: '*/*'
-  })));
-  const resources = assets.map((asset, index) => ({ ...asset, response: assetResponses[index] }));
-
-  const botEntries = await Promise.all(Object.entries({
-    googlebot: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-    oaiSearchBot: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot',
-    perplexityBot: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot'
-  }).map(async ([name, userAgent]) => [name, await safeFetch(start, { userAgent, maxBytes: 100_000 })]));
-
   return {
     startUrl: start.href,
-    finalUrl: firstResponse.finalUrl,
+    finalUrl: first.finalUrl,
     origin,
-    pages,
-    pageResponses,
-    targets,
-    resources,
+    first,
     robots,
-    sitemaps,
-    bots: Object.fromEntries(botEntries),
-    sampled: pages.length >= MAX_PAGES || sitemapPageUrls.length > pages.length || allLinks.length > uncheckedInternal.length + pages.length + external.length,
-    limits: { pages: MAX_PAGES, targets: MAX_TARGETS, assets: MAX_ASSETS }
+    bots: Object.fromEntries(Object.keys(BOT_AGENTS).map((name, index) => [name, botResponses[index]])),
+    sitemapSeeds: [...new Set([...robots.sitemaps, new URL('/sitemap.xml', origin).href])]
   };
+}
+
+export async function collectPageBatch(root, values) {
+  const origin = publicUrl(root).origin;
+  const urls = unique(values.map(value => publicUrl(value).href)).filter(value => new URL(value).origin === origin).slice(0, PAGE_BATCH);
+  const responses = await Promise.all(urls.map(url => safeFetch(url, { maxBytes: 2_100_000 })));
+  const pages = responses.filter(response => response.text && htmlResponse(response)).map(parsePage);
+  const pageResponses = new Map();
+  for (const response of responses) {
+    pageResponses.set(normalize(response.requestedUrl), response);
+    pageResponses.set(normalize(response.finalUrl), response);
+  }
+  const context = emptyContext(origin, pages, pageResponses);
+  return {
+    context,
+    summaries: responses.map(response => summarizeResponse(response, pages.find(page => normalize(page.url) === normalize(response.finalUrl)))),
+    discovered: unique(pages.filter(page => page.status >= 200 && page.status < 400).flatMap(page => [
+      ...page.links.map(link => link.url),
+      ...page.canonical,
+      ...page.hreflang.map(item => item.url)
+    ])).filter(url => sameOrigin(url, origin)),
+    external: unique(pages.flatMap(page => page.links.map(link => link.url))).filter(url => !sameOrigin(url, origin)),
+    resources: mergeResources(pages.flatMap(page => pageResources(page)))
+  };
+}
+
+export async function collectSitemapBatch(values) {
+  const urls = unique(values.map(value => publicUrl(value).href)).slice(0, SITEMAP_BATCH);
+  const responses = await Promise.all(urls.map(url => safeFetch(url, { maxBytes: 10_000_000, accept: 'application/xml,text/xml,*/*;q=0.5', forceText: true })));
+  return responses.map((response, index) => parseSitemap(urls[index], response));
+}
+
+export async function collectFetchBatch(entries) {
+  const clean = entries.slice(0, FETCH_BATCH).map(entry => ({
+    url: publicUrl(entry.url).href,
+    kinds: unique([entry.kinds].flat().map(String))
+  }));
+  const responses = await Promise.all(clean.map(entry => safeFetch(entry.url, {
+    maxBytes: entry.kinds.some(kind => ['css', 'js'].includes(kind)) ? 500_000 : 70_000,
+    forceText: entry.kinds.some(kind => ['css', 'js'].includes(kind)),
+    headers: entry.kinds.every(kind => ['image', 'icon', 'video'].includes(kind)) ? { range: 'bytes=0-65535' } : undefined,
+    accept: '*/*'
+  })));
+  return clean.map((entry, index) => ({
+    ...entry,
+    ...publicResponse(responses[index]),
+    smallFonts: /font-size\s*:\s*(?:[0-9]|1[01])px/i.test(responses[index].text),
+    iconValid: entry.kinds.includes('icon') ? squareIcon(responses[index].bytes) : null
+  }));
 }
 
 export function responseFor(context, url) {
   return context.pageResponses.get(normalize(url)) ?? context.targets.get(normalize(url)) ?? context.resources.find(item => normalize(item.url) === normalize(url))?.response;
 }
 
-function parseRobots(response) {
+export function parseRobots(response) {
   const text = response.text ?? '';
-  const lines = text.split(/\r?\n/);
   const groups = [];
   const sitemaps = [];
   const errors = [];
   let group;
 
-  for (let index = 0; index < lines.length; index++) {
-    const line = lines[index].replace(/\s+#.*$/, '').trim();
+  for (const [index, source] of text.split(/\r?\n/).entries()) {
+    const line = source.replace(/\s+#.*$/, '').trim();
     if (!line) continue;
     const match = line.match(/^([\w-]+)\s*:\s*(.*)$/);
     if (!match) {
@@ -132,17 +114,104 @@ function parseRobots(response) {
       else group.rules.push({ type: key, path: value });
     }
   }
-
   return { response, text, groups, sitemaps, errors, disallows: (agent, url) => disallowed(groups, agent, url) };
 }
 
+export function parseSitemap(url, response) {
+  const text = response.text ?? '';
+  const root = text.match(/<(urlset|sitemapindex)\b/i)?.[1]?.toLowerCase() ?? '';
+  return {
+    url,
+    ...publicResponse(response),
+    kind: root === 'sitemapindex' ? 'index' : root === 'urlset' ? 'urlset' : 'invalid',
+    urls: [...text.matchAll(/<loc\b[^>]*>([\s\S]*?)<\/loc\s*>/gi)].map(match => decodeXml(match[1].trim())).filter(validHttpUrl),
+    syntaxError: response.status === 200 && (!root || !/<\/\s*(urlset|sitemapindex)\s*>/i.test(text)),
+    truncated: response.truncated
+  };
+}
+
+export function emptyContext(origin, pages = [], pageResponses = new Map()) {
+  const ok = { requestedUrl: origin, finalUrl: origin, status: 200, headers: {}, contentType: 'text/html', contentLength: 0, bytes: new Uint8Array(), text: '', truncated: false, redirects: [], elapsedMs: 0, error: '' };
+  return {
+    startUrl: origin,
+    finalUrl: pages[0]?.url ?? origin,
+    origin,
+    pages,
+    pageResponses,
+    targets: new Map(),
+    resources: [],
+    sitemaps: [],
+    bots: { googlebot: ok, oaiSearchBot: ok, perplexityBot: ok },
+    robots: { response: ok, text: '', groups: [], sitemaps: [], errors: [], disallows: () => false }
+  };
+}
+
+function summarizeResponse(response, page) {
+  return {
+    ...publicResponse(response),
+    url: page?.url ?? response.finalUrl,
+    isHtml: Boolean(page?.isHtml),
+    robots: page?.robots ?? [],
+    canonical: page?.canonical ?? [],
+    links: page?.links ?? [],
+    hreflang: page?.hreflang ?? [],
+    lang: page?.htmlAttrs.lang ?? '',
+    fingerprint: page?.visibleText.length > 120 ? page.visibleText.toLowerCase().replace(/\d+/g, '#') : '',
+    structured: Boolean(page?.structuredNodes.length)
+  };
+}
+
+function publicResponse(response) {
+  return {
+    requestedUrl: response.requestedUrl,
+    finalUrl: response.finalUrl,
+    status: response.status,
+    error: response.error,
+    redirects: response.redirects,
+    contentLength: response.contentLength,
+    contentType: response.contentType,
+    contentEncoding: response.headers['content-encoding'] ?? '',
+    elapsedMs: response.elapsedMs,
+    truncated: response.truncated
+  };
+}
+
+function pageResources(page) {
+  return [
+    ...page.icons.map(url => ({ url, kind: 'icon', owner: page.url })),
+    ...structuredUrls(page).map(url => ({ url, kind: 'structured', owner: page.url })),
+    ...page.videos.flatMap(video => [video.src, video.poster, ...video.sources.map(source => source.src)].filter(Boolean).map(value => ({ url: new URL(value, page.url).href, kind: 'video', owner: page.url }))),
+    ...page.css.map(url => ({ url, kind: 'css', owner: page.url })),
+    ...page.js.map(url => ({ url, kind: 'js', owner: page.url })),
+    ...page.imageUrls.map(url => ({ url, kind: 'image', owner: page.url }))
+  ];
+}
+
+function structuredUrls(page) {
+  const keys = new Set(['contentUrl', 'embedUrl', 'thumbnailUrl', 'image', 'logo']);
+  return page.structuredNodes.flatMap(node => Object.entries(node).filter(([key]) => keys.has(key)).flatMap(([, value]) => [value].flat().map(item => typeof item === 'string' ? item : item?.contentUrl ?? item?.url)))
+    .filter(Boolean).map(value => {
+      try { return new URL(value, page.url).href; } catch { return ''; }
+    }).filter(Boolean);
+}
+
+function mergeResources(items) {
+  const resources = new Map();
+  for (const item of items) {
+    const current = resources.get(item.url) ?? { url: item.url, kinds: [], owners: [] };
+    if (!current.kinds.includes(item.kind)) current.kinds.push(item.kind);
+    if (!current.owners.includes(item.owner)) current.owners.push(item.owner);
+    resources.set(item.url, current);
+  }
+  return [...resources.values()];
+}
+
 function disallowed(groups, agent, value) {
-  const path = `${new URL(value).pathname}${new URL(value).search}`;
+  const url = new URL(value);
+  const path = `${url.pathname}${url.search}`;
   const candidates = groups.filter(group => group.agents.some(item => item === '*' || agent.toLowerCase().includes(item)));
   const specific = candidates.filter(group => group.agents.some(item => item !== '*'));
-  const matches = (specific.length ? specific : candidates).flatMap(group => group.rules)
-    .filter(rule => rule.path && robotsPattern(rule.path).test(path))
-    .sort((a, b) => b.path.length - a.path.length);
+  const matches = (specific.length ? specific : candidates).flatMap(group => group.rules).filter(rule => rule.path && robotsPattern(rule.path).test(path)).sort((a, b) => b.path.length - a.path.length);
   return matches[0]?.type === 'disallow';
 }
 
@@ -152,18 +221,20 @@ function robotsPattern(path) {
   return new RegExp(`^${escaped}${end ? '$' : ''}`);
 }
 
-function parseSitemap(url, response) {
-  const text = response.text ?? '';
-  const root = text.match(/<(urlset|sitemapindex)\b/i)?.[1]?.toLowerCase() ?? '';
-  const urls = [...text.matchAll(/<loc\b[^>]*>([\s\S]*?)<\/loc\s*>/gi)].map(match => decodeXml(match[1].trim())).filter(validHttpUrl);
-  return {
-    url,
-    response,
-    kind: root === 'sitemapindex' ? 'index' : root === 'urlset' ? 'urlset' : 'invalid',
-    urls,
-    syntaxError: response.status === 200 && (!root || !/<\/\s*(urlset|sitemapindex)\s*>/i.test(text)),
-    truncated: response.truncated
-  };
+function squareIcon(bytes) {
+  if (bytes.length < 10) return false;
+  if (bytes[0] === 0x89 && String.fromCharCode(...bytes.slice(1, 4)) === 'PNG' && bytes.length >= 24) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const width = view.getUint32(16);
+    return width === view.getUint32(20) && width >= 8;
+  }
+  if (String.fromCharCode(...bytes.slice(0, 3)) === 'GIF') {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const width = view.getUint16(6, true);
+    return width === view.getUint16(8, true) && width >= 8;
+  }
+  if (bytes[0] === 0 && bytes[1] === 0 && bytes[2] === 1 && bytes[3] === 0) return true;
+  return true;
 }
 
 function decodeXml(value) {
@@ -178,10 +249,6 @@ function htmlResponse(response) {
   return /(?:text\/html|application\/xhtml\+xml)/i.test(response.contentType) || /^\s*<!doctype html|^\s*<html/i.test(response.text);
 }
 
-function likelyPage(value) {
-  try { return !/\.(?:avif|css|gif|ico|jpe?g|js|json|mp3|mp4|pdf|png|svg|webm|webp|woff2?|xml|zip)$/i.test(new URL(value).pathname); } catch { return false; }
-}
-
 function sameOrigin(value, origin) {
   try { return new URL(value).origin === origin; } catch { return false; }
 }
@@ -191,40 +258,23 @@ function normalize(value) {
     const url = new URL(value);
     url.hash = '';
     return url.href;
-  } catch {
-    return String(value);
-  }
+  } catch { return String(value); }
 }
 
-function unique(values, key = value => value) {
-  return [...new Map(values.map(value => [key(value), value])).values()];
-}
-
-function structuredUrls(page) {
-  const keys = new Set(['contentUrl', 'embedUrl', 'thumbnailUrl', 'image', 'logo']);
-  return page.structuredNodes.flatMap(node => Object.entries(node).filter(([key]) => keys.has(key)).flatMap(([, value]) => [value].flat().map(item => typeof item === 'string' ? item : item?.contentUrl ?? item?.url)))
-    .filter(Boolean).map(value => {
-      try { return new URL(value, page.url).href; } catch { return ''; }
-    }).filter(Boolean);
-}
-
-function mergeAssets(items) {
-  const assets = new Map();
-  for (const item of items) {
-    const current = assets.get(item.url) ?? { url: item.url, kinds: [] };
-    if (!current.kinds.includes(item.kind)) current.kinds.push(item.kind);
-    assets.set(item.url, current);
-  }
-  return [...assets.values()];
+function unique(values) {
+  return [...new Set(values)];
 }
 
 async function safeFetch(value, options) {
   try {
     return await fetchLimited(value, options);
   } catch {
-    return {
-      requestedUrl: String(value), finalUrl: String(value), status: 0, headers: {}, contentType: '', contentLength: 0,
-      bytes: new Uint8Array(), text: '', truncated: false, redirects: [], elapsedMs: 0, error: 'blocked_address'
-    };
+    return { requestedUrl: String(value), finalUrl: String(value), status: 0, headers: {}, contentType: '', contentLength: 0, bytes: new Uint8Array(), text: '', truncated: false, redirects: [], elapsedMs: 0, error: 'blocked_address' };
   }
 }
+
+const BOT_AGENTS = {
+  googlebot: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+  oaiSearchBot: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot',
+  perplexityBot: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot'
+};

@@ -3,5 +3,6 @@
   "name": "seo-audit-web",
   "pages_build_output_dir": "public",
   "compatibility_date": "2026-08-13",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true, "head_sampling_rate": 1 }
 }
