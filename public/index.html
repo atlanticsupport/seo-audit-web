@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Auditor SEO verificável</title>
+  <meta name="description" content="Auditoria técnica SEO determinística a partir de um URL.">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Auditoria técnica</p>
+      <h1>SEO, sem suposições.</h1>
+      <p class="intro">Insere um URL. A aplicação mostra apenas pontos que consegue testar diretamente nesta execução.</p>
+    </header>
+
+    <form id="audit-form">
+      <label for="url">URL do site</label>
+      <div class="url-entry">
+        <input id="url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://exemplo.com" required>
+        <button type="submit">Analisar</button>
+      </div>
+    </form>
+
+    <section id="status" class="status" aria-live="polite" hidden></section>
+    <section id="summary" class="summary" aria-live="polite" hidden></section>
+    <section id="results" class="results" aria-label="Resultados da auditoria"></section>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,2019 @@
+// Gerado a partir de docs/seo-audit-catalogo-unificado.md. Não editar.
+export const RULES = [
+  {
+    "code": "HTTP-001",
+    "name": "404 page",
+    "category": "Internal pages",
+    "details": "404 – Not Found is one of the most common 4xx errors and indicates that the requested URL does not exist. 404 URLs on your website damage the user experience, as people cannot access the page or file via a link they click. Besides, internal links to 404 URLs create unnecessary \"dead ends\" for the search engine crawlers and can waste your crawl budget.",
+    "solution": "Review the list of 404 URLs on your website. You should review the internal outgoing links to all the 404 pages reported and either remove these links or replace them with relevant links to live pages. Alternatively, you can set the appropriate 301 redirects. It is especially important for the 404 pages with a decent number of external backlinks."
+  },
+  {
+    "code": "HTTP-002",
+    "name": "4XX page",
+    "category": "Internal pages",
+    "details": "4xx HTTP status codes indicate that the requested page or resource cannot be accessed. 401 - Unauthorized, 403 - Forbidden, 408 - Request Timeout, and 404 - Not Found are the most common \"Client Errors\". 4xx URLs damage the user experience on your website as people cannot access the page or file via a link they click. Besides, internal links to 4xx URLs create unnecessary \"dead ends\" for the search engine crawlers and can waste your crawl budget. Pages of your website that changed their response code to 4xx will be removed from Google's index.",
+    "solution": "Review the list of 4xx URLs. You should review the internal outgoing links to all the 4xx pages reported and either remove these links or replace them with relevant links to live pages. Alternatively, you can set the appropriate 301 redirects. It is especially important when for moved or deleted pages on your website. This will provide smooth crawlability for your website and guarantee good user experience. The HTTP 429 (Too Many Requests) response code may indicate that the crawling speed set in the crawl settings for your project is too high for a web server. Reduce it in the crawl settings and run a project re-crawl."
+  },
+  {
+    "code": "HTTP-003",
+    "name": "500 page",
+    "category": "Internal pages",
+    "details": "URLs that return the 500 HTTP status code (Internal Server Error). This code indicates a potential problem with your web server. These URLs can be accessed neither by your website visitors nor by the search engines crawlers. Crawlers will be forced to abandon the request while people will most likely leave your website.",
+    "solution": "Review the list of URLs that return 500 HTTP status code. Try to reproduce the server error reported by Site Audit for these URLs in your browser. You should also check the error logs for your server. If this is an ongoing problem and a lot of internal pages return 5xx code, you need to check with your hosting provider or with your web developers. You should also note that this can be a temporary issue, e.g., when the crawl took place during some maintenance on your website's server."
+  },
+  {
+    "code": "HTTP-004",
+    "name": "5XX page",
+    "category": "Internal pages",
+    "details": "URLs that return one of the 5xx HTTP status codes (Server Error). URLs return 5xx status codes when the server is not able to fulfill the request. These URLs can be accessed neither by your website visitors nor by the search engines crawlers. Crawlers will be forced to abandon the request while people will most likely leave your website.",
+    "solution": "Review the list of 5xx URLs. Try to reproduce the server error reported by the Site Audit for these URLs in your browser. You should also check the error logs for your server. If this is an ongoing problem and a lot of internal pages return 5xx code, you need to check with your hosting provider or with your web developers. Your server may be overloaded or misconfigured. You should also note that this can be a temporary issue, e.g. when the crawl took place during some maintenance on your website's server."
+  },
+  {
+    "code": "HTTP-005",
+    "name": "Timed out",
+    "category": "Internal pages",
+    "details": "Response from the server was not received on time when requesting a page or resource. This may damage your website crawlability (and thus indexability) and have a negative impact on the user experience.",
+    "solution": "Review the list of URLs that timed out. Try to reproduce the server error reported by Site Audit for these URLs in your browser. You should also check the error logs for your server. If this is an ongoing problem, you need to check with your hosting provider or with your web developers. Your server may be overloaded, misconfigured, or very slow. You should also note that this can be a temporary issue, e.g. when the crawl took place during some maintenance on your website's server."
+  },
+  {
+    "code": "HTTP-006",
+    "name": "HTTPS/HTTP mixed content",
+    "category": "Internal pages",
+    "details": "Mixed content occurs when initial HTML is loaded over a secure HTTPS connection, but resource files (images, CSS, or JS) are loaded over an insecure HTTP connection. A warning about this will be shown in modern browsers to inform users about the insecure resources on a page. Mixed content degrades the security and user experience of your HTTPS site.",
+    "solution": "Make sure all the resources on your web pages are loaded over a secure HTTPS connection. If the resource is available over HTTPS, you can simply link to its HTTPS version. Otherwise, you should: Include the resource from a different host, if one is available. Download and host the content on your site directly, if you are legally allowed to do so. Exclude the resource from your site altogether."
+  },
+  {
+    "code": "IDX-001",
+    "name": "Canonical points to 4XX",
+    "category": "Indexability",
+    "details": "Website pages that have a canonical link pointing to a 4xx URL. 4xx HTTP status codes indicate that the page or resource cannot be accessed. Only valid live URLs should be specified as canonicals. When the search engine crawler is not able to access the specified canonical page, this instruction will be ignored, and wrong (non-canonical) page version can be indexed.",
+    "solution": "Review the list of pages with canonical links pointing to a 4xx URL. Replace the canonical URLs that return the 4xx status code with the links to the valid 200 (OK) page versions you want to be indexed in search results."
+  },
+  {
+    "code": "IDX-002",
+    "name": "Canonical points to 5XX",
+    "category": "Indexability",
+    "details": "Website pages that have a canonical link pointing to a 5xx (Server Error) URL. Only valid live URLs should be specified as canonicals. Otherwise, this instruction will be ignored by the search engines, and wrong (non-canonical) page version can be indexed.",
+    "solution": "5xx errors indicate a problem with your web server. You need to check with your hosting provider or with your web developers because your server may be overloaded or misconfigured. You should also note that this can be a temporary issue, e.g. when the crawl took place during some maintenance on your website's server. If erroneous URL was specified as canonical, replace it with the link to the valid 200 page version you want to be indexed in search results."
+  },
+  {
+    "code": "IDX-003",
+    "name": "Canonical points to redirect",
+    "category": "Indexability",
+    "details": "Similar or duplicate pages of a website must specify the canonical page to instruct search engines to show the most authoritative (canonical) version of the page in search results. A redirecting URL specified as canonical can be misinterpreted by the search engines; such conflicting instruction can be ignored. As a result, wrong (non-canonical) page version can be indexed.",
+    "solution": "Review the list of pages with canonical links pointing to a redirecting URL. Replace the redirecting canonical links with the direct links to the valid 200 (OK) page versions that you want to be indexed in search results."
+  },
+  {
+    "code": "IDX-004",
+    "name": "Page size exceeds Googlebot's 2 MB crawl limit",
+    "category": "Indexability",
+    "details": "Googlebot only crawls the first 2 MB of an HTML page's uncompressed content. Any content beyond this limit is silently discarded and won't be considered for indexing. This means important text, links, or structured data placed further down in oversized pages may never be seen by Google. See Google's documentation",
+    "solution": "Reduce the HTML file size below 2 MB. Common approaches include removing inline data such as base64-encoded images, large embedded SVGs, or bulky JSON blocks. If the page contains CSS or JavaScript written directly in the HTML, move them to separate external files. Also look for excessive or duplicated markup in the page source."
+  },
+  {
+    "code": "IDX-005",
+    "name": "Noindex page",
+    "category": "Indexability",
+    "details": "Pages with a 'noindex' meta tag. A 'noindex' meta tag is used on a page to prevent it from search indexing. See Google's guidelines on this tag here.",
+    "solution": "Only use this tag on the pages you don't want to appear in search results. Please take notice that for the noindex meta tag to be effective, the page must not be blocked by the robots.txt file. Otherwise, the search crawlers will not be able to see it. If you want a page to be indexed by search engines, you should remove this tag."
+  },
+  {
+    "code": "IDX-006",
+    "name": "Noindex in HTML and HTTP header",
+    "category": "Indexability",
+    "details": "Pages where a 'noindex' directive is specified in the meta tag and in the HTTP response header (X-Robots tag).",
+    "solution": "It is enough to implement a 'noindex' either in the HTML meta tag or in the HTTP header."
+  },
+  {
+    "code": "IDX-007",
+    "name": "Nofollow in HTML and HTTP header",
+    "category": "Indexability",
+    "details": "Pages where a 'nofollow' directive is specified in both the meta tag and in the HTTP response header (X-Robots tag).",
+    "solution": "It is enough to implement a 'nofollow' either in the HTML meta tag or in the HTTP header."
+  },
+  {
+    "code": "IDX-008",
+    "name": "Nofollow page",
+    "category": "Indexability",
+    "details": "Pages with a 'nofollow' meta tag. A 'nofollow' meta tag is used on a page to instruct search engine crawlers not to follow the links on it.",
+    "solution": "Only use this tag on the pages you don't want search crawlers to follow links on. Otherwise, you should remove this tag."
+  },
+  {
+    "code": "IDX-009",
+    "name": "Non-canonical page specified as canonical one",
+    "category": "Indexability",
+    "details": "Pages specified as canonical ones have a 'rel=canonical' link to a different page. This creates a so-called \"canonical chain\" where page A links to Page B that links to page C from their 'rel=canonical' elements.",
+    "solution": "Although Google affirm they can follow canonical chains, it is strongly recommended to avoid them. Canonical chains may confuse search engine crawlers; misconfigured 'rel=canonical' will be ignored. Point to a single canonical page where possible to ensure optimal canonicalization results."
+  },
+  {
+    "code": "IDX-010",
+    "name": "Noindex follow page",
+    "category": "Indexability",
+    "details": "Pages that have a 'noindex' but don't have a 'nofollow' tag in the HTML code or in the HTTP response header. These pages will not be shown in search engines' results. But since they don't have a 'nofollow' tag, all links on them are supposed to be followed by search engine bots and pass \"link juice\". However, in one of the recent Google Webmasters videos, Google's John Mueller explained that Google will understand a long-term 'noindex' (without a 'nofollow') as a 'noindex, nofollow'.",
+    "solution": "Check this report for the 'noindex' pages you expect to pass link value to the other pages on your website. And if you want to make sure search engine bots won't follow the links on a 'noindex' page, add a 'nofollow' as a meta tag or as an HTTP response header."
+  },
+  {
+    "code": "IDX-011",
+    "name": "Canonical from HTTP to HTTPS",
+    "category": "Indexability",
+    "details": "HTTP pages on your website with the canonical link pointing to an HTTPS page. Similar or duplicate pages of your website must have a 'rel=canonical' attribute to instruct search engines to show the most authoritative (canonical) version of the page in search results. See recommendations from Google.",
+    "solution": "HTTPS is one of the ranking signals for Google. It is recommended to adopt HTTPS across your website. Keep in mind that Google prefers HTTPS pages over equivalent HTTP pages as canonical."
+  },
+  {
+    "code": "IDX-012",
+    "name": "Canonical from HTTPS to HTTP",
+    "category": "Indexability",
+    "details": "HTTPS pages on your website with the canonical link pointing to an HTTP page. Similar or duplicate pages of your website must have a 'rel=canonical' attribute to instruct search engines to show the most authoritative (canonical) version of the page in search results. See recommendations from Google.",
+    "solution": "HTTPS is one of the ranking signals for Google. Make sure the canonical URLs on your website point to HTTPS pages. Keep in mind that Google prefers HTTPS pages over equivalent HTTP pages as canonical."
+  },
+  {
+    "code": "IDX-015",
+    "name": "Noindex and nofollow page",
+    "category": "Indexability",
+    "details": "Pages with both 'noindex' and 'nofollow' directives. A 'noindex' directive instructs search engine crawlers not show a page in search results. A 'nofollow' directive instructs search engine crawlers not to follow the links on a page.",
+    "solution": "Only use these directives if you don't want your pages to be indexed in search results and links on them followed by search engine crawlers."
+  },
+  {
+    "code": "LNK-001",
+    "name": "Canonical URL has no incoming internal links",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. Similar or duplicate pages of a website must specify the canonical URL to instruct search engines to show the most authoritative (canonical) version of the page in search results. In case the URL has no incoming internal links, there’s no way for people to reach it while browsing your website.",
+    "solution": "Check your website navigation and link architecture to make sure all canonical pages are easily accessible. You should always internally link directly to the canonical URL where possible."
+  },
+  {
+    "code": "LNK-002",
+    "name": "HTTPS page has internal links to HTTP",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. HTTPS pages linking to HTTP pages on your website. If an internal link on your website brings people to an HTTP URL, modern browsers will show a warning about a non-secure page. This can damage your overall website authority and user experience.",
+    "solution": "Identify every internal outlink whose scheme is http://. Edit the links on the affected pages so that they point to HTTPS versions. Make sure you link to HTTPS pages where possible."
+  },
+  {
+    "code": "LNK-003",
+    "name": "Orphan page (has no incoming internal links)",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. Orphan pages of a website have no incoming internal links. Search engine crawlers can only discover such pages from the sitemap file or from external backlinks. Website visitors won't be able to get to this page from any other page on your website.",
+    "solution": "Check your website navigation and link architecture to make sure all relevant pages are easily accessible."
+  },
+  {
+    "code": "LNK-004",
+    "name": "Page has links to broken page",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. Pages on your website that link to internal or external URLs returning 404 or 410 HTTP response codes. Broken links on your website damage your visitors' browsing experience as people cannot access the page or file via a link they click. Besides, broken links create unnecessary \"dead ends\" for the search engine crawlers and can waste your crawl budget.",
+    "solution": "Remove the broken links from the affected pages or replace them with links to other relevant live pages. Additionally, you can set redirects for the deleted or moved pages, which is especially relevant for the pages with external backlinks."
+  },
+  {
+    "code": "LNK-005",
+    "name": "Page has no outgoing links",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. If a page has no outgoing links, it is a \"dead end\" for both website visitors and search engine crawlers.",
+    "solution": "Check your website navigation and link architecture to make sure your website has no \"dead ends\"."
+  },
+  {
+    "code": "LNK-006",
+    "name": "Page has links to redirect",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. For redirecting URLs on your website, this is not a problem, although we recommend linking to the destination page directly. However, a redirect on an external page you link to requires your attention.",
+    "solution": "It is generally recommended to replace links to redirecting URLs on your website with direct links. This is especially important when linking to external pages. You should manually review the external redirecting URLs linked from your site to make sure that the destination URL has relevant content."
+  },
+  {
+    "code": "LNK-007",
+    "name": "Page has nofollow incoming internal links only",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. Search engine bots won't be able to reach (and thus index) the pages via nofollowed links. Besides, no link equity (e.g. PageRank) will be passed to the linked pages via nofollowed links.",
+    "solution": "You should only \"nofollow\" links to the specific pages you don't want to be ranked on Google. If you expect the page to rank high on Google, it should have a good number of relevant \"followed\" internal links from other pages on your website."
+  },
+  {
+    "code": "LNK-008",
+    "name": "Redirected page has no incoming internal links",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. The destination page of the redirect has no incoming internal links. In this case, there is no way your website visitors can access it from your website apart from a redirected URL.",
+    "solution": "Where possible, edit the links on the referring pages so that they point to the destination pages directly."
+  },
+  {
+    "code": "LNK-009",
+    "name": "HTTP page has internal links to HTTPS",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. HTTP pages linking to HTTPS pages on your website.",
+    "solution": "HTTPS is one of the ranking signals for Google. It is recommended to adopt HTTPS across your website."
+  },
+  {
+    "code": "LNK-010",
+    "name": "Page has nofollow and dofollow incoming internal links",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. A mixture of followed and nofollowed links to a page could be a mistake. An indexable page could get more \"link juice\" if all internal links to it were followed; followed links to the pages you don't want to be crawled and indexed simply waste the \"link equity\".",
+    "solution": "If there's no specific need, ensure that the reported URLs only get one type of incoming links: either followed or nofollowed."
+  },
+  {
+    "code": "LNK-011",
+    "name": "Page has nofollow outgoing internal links",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. Pages linking to internal page or pages of your website via a \"nofollow\" link. Search engine crawlers will not follow (crawl) the \"nofollow\" links on your website and PageRank won't be passed.",
+    "solution": "If there's no specific need, you should not use \"nofollow\" for internal links within your website. See Google's recommendations on \"nofollow\" links."
+  },
+  {
+    "code": "LNK-012",
+    "name": "Page has only one dofollow incoming internal link",
+    "category": "Links",
+    "details": "Escopo: páginas indexáveis. A página recebe apenas um link interno rastreável sem nofollow. Uma única origem cria um caminho de descoberta frágil e pode não comunicar adequadamente a importância, a hierarquia e o contexto temático da URL. Devem ser considerados o número de páginas de origem, a relevância dessas páginas, a posição dos links e o texto das âncoras; links repetidos na navegação não substituem ligações contextuais relevantes.",
+    "solution": "Criar links HTML rastreáveis () a partir de páginas indexáveis relacionadas. Ligar categorias a subcategorias e produtos, produtos às categorias e alternativas pertinentes, e guias às páginas comerciais que ajudam a escolher. Usar âncoras descritivas, apontar diretamente para a URL canonical e garantir que as páginas prioritárias não dependem apenas do sitemap, da pesquisa interna, do footer ou de JavaScript."
+  },
+  {
+    "code": "LNK-013",
+    "name": "HTTPS page has internal links to HTTP",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. HTTPS pages linking to HTTP pages on your website. If an internal link on your website brings people to an HTTP URL, modern browsers will show a warning about a non-secure page. This can damage your overall website authority and user experience.",
+    "solution": "Identify every internal outlink whose scheme is http://. Edit the links on the affected pages so that they point to HTTPS versions. Make sure you link to HTTPS pages where possible."
+  },
+  {
+    "code": "LNK-014",
+    "name": "Orphan page (has no incoming internal links)",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. Orphan pages of a website have no incoming internal links. Search engine crawlers can only discover such pages from the sitemap file or from external backlinks. Website visitors won't be able to get to this page from any other page on your website.",
+    "solution": "Check your website navigation and link architecture to make sure all relevant pages are easily accessible."
+  },
+  {
+    "code": "LNK-015",
+    "name": "Page has links to broken page",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. Pages on your website that link to internal or external URLs returning 404 or 410 HTTP response codes. Broken links on your website damage your visitors' browsing experience as people cannot access the page or file via a link they click. Besides, broken links create unnecessary \"dead ends\" for the search engine crawlers and can waste your crawl budget.",
+    "solution": "Remove the broken links from the affected pages or replace them with links to other relevant live pages. Additionally, you can set redirects for the deleted or moved pages, which is especially relevant for the pages with external backlinks."
+  },
+  {
+    "code": "LNK-016",
+    "name": "Page has no outgoing links",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. If a page has no outgoing links, it is a \"dead end\" for both website visitors and search engine crawlers.",
+    "solution": "Check your website navigation and link architecture to make sure your website has no \"dead ends\"."
+  },
+  {
+    "code": "LNK-017",
+    "name": "Page has only one dofollow incoming internal link",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. Pages that only have one \"dofollow\" internal link. The number of internal links pointing to a page is a signal to search engines about the relative importance of that page. Besides, their anchor text helps search engines to understand the context better.",
+    "solution": "Make sure the most important pages on your website have at least a few internal \"dofollow\" links. Ahrefs' guide to internal links for SEO."
+  },
+  {
+    "code": "LNK-018",
+    "name": "HTTP page has internal links to HTTPS",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. HTTP pages linking to HTTPS pages on your website.",
+    "solution": "HTTPS is one of the ranking signals for Google. It is recommended to adopt HTTPS across your website."
+  },
+  {
+    "code": "LNK-019",
+    "name": "Page has links to redirect",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. For redirecting URLs on your website, this is not a problem, although we recommend linking to the destination page directly. However, a redirect on an external page you link to requires your attention.",
+    "solution": "It is generally recommended to replace links to redirecting URLs on your website with direct links. This is especially important when linking to external pages. You should manually review the external redirecting URLs linked from your site to make sure that the destination URL has relevant content."
+  },
+  {
+    "code": "LNK-020",
+    "name": "Page has nofollow and dofollow incoming internal links",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. A mixture of followed and nofollowed links to a page is most likely a mistake. An indexable page could get more \"link juice\" if all internal links to it were followed; followed links to the pages you don't want to be crawled and indexed simply waste the \"link equity\".",
+    "solution": "Ensure that the reported URLs only get one type of incoming links: either followed or nofollowed."
+  },
+  {
+    "code": "LNK-021",
+    "name": "Page has nofollow incoming internal links only",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. Search engine bots won't be able to reach (and thus index) the pages via nofollowed links. Besides, no link equity (e.g. PageRank) will be passed to the linked pages via nofollowed links.",
+    "solution": "You should only \"nofollow\" links to the specific pages you don't want to be ranked on Google. If you expect the page to rank high on Google, it should have a good number of relevant \"followed\" internal links from other pages on your website."
+  },
+  {
+    "code": "LNK-022",
+    "name": "Page has nofollow outgoing internal links",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. Pages linking to internal page or pages of your website via a \"nofollow\" link. Search engine crawlers will not follow (crawl) the \"nofollow\" links on your website and PageRank won't be passed.",
+    "solution": "If there's no specific need, you should not use \"nofollow\" for internal links within your website. See Google's recommendations on \"nofollow\" links."
+  },
+  {
+    "code": "LNK-023",
+    "name": "Redirected page has no incoming internal links",
+    "category": "Links",
+    "details": "Escopo: páginas não indexáveis. The destination page of the redirect has no incoming internal links. In this case, there is no way your website visitors can access it from your website apart from a redirected URL.",
+    "solution": "Where possible, edit the links on the referring pages so that they point to the destination pages directly."
+  },
+  {
+    "code": "RED-001",
+    "name": "Broken redirect",
+    "category": "Redirects",
+    "details": "Redirects that point to a page returning one of the 4xx or 5xx HTTP response codes. These URLs can be accessed neither by your website visitors nor by the search engines crawlers. Crawlers will be forced to abandon the request while people will most likely leave your website.",
+    "solution": "Identify every internal page that links to the redirecting URL. For 4xx HTTP status codes of the destination URLs, replace the links to redirecting URLs on these pages with direct links to relevant live pages or remove these links. For 5xx codes, you need to check with your hosting provider or with your web developer. Your server may be overloaded or misconfigured."
+  },
+  {
+    "code": "RED-002",
+    "name": "Redirect chain too long",
+    "category": "Redirects",
+    "details": "Redirect chain is a series of redirects between the initial URL and the destination URL. Google follows only 5 redirect hops in a session – if there are more, their crawler will typically resume where they left off but the longer the chain the less likely they are to consolidate signals to the final destination. Besides, chaining redirects may inflict damage on the user experience, slowing down the page loading speeds.",
+    "solution": "Identify every internal page that links to the first URL in the chain and replace the link with the final destination URL."
+  },
+  {
+    "code": "RED-003",
+    "name": "Redirect loop",
+    "category": "Redirects",
+    "details": "Redirect loop happens when a URL redirects to itself or when a redirect chain redirects to one of the URLs within the chain. This creates an infinite loop of redirects. Redirect loop will typically result in \"Too Many Redirects\" error in the user's browser and will be a \"trap\" for search engine crawlers.",
+    "solution": "If the URL is not supposed to redirect, change its HTTP response code to 200. For URLs that must be redirected, correct the final destination URL of the single redirect or redirect chain to the valid 200 page. You can also On those pages, we recommend replacing outgoing links to redirecting URLs with direct links to valid 200 pages."
+  },
+  {
+    "code": "RED-004",
+    "name": "3XX redirect",
+    "category": "Redirects",
+    "details": "Even though Google announced that any redirection method is good and will pass PageRank, Googlebot is not the only visitor of your website. Redirects always require caution. They may hurt your website performance, especially for mobile users, or confuse website visitors.",
+    "solution": "It is recommended to replace the links to the internal redirected URLs on your website with the direct links to the destination pages where possible."
+  },
+  {
+    "code": "RED-005",
+    "name": "302 redirect",
+    "category": "Redirects",
+    "details": "Internal URLs that redirect to another URL with 302 HTTP status code (temporary redirect). Both 302 and 301 redirects pass PageRank as announced by Google. However, 302 redirect is a temporary one by definition and should not be used where the redirection is permanent.",
+    "solution": "For every affected URL, use HTTP 301 or 308 when the move is permanent; keep HTTP 302 only when the redirect is genuinely temporary."
+  },
+  {
+    "code": "RED-006",
+    "name": "HTTPS to HTTP redirect",
+    "category": "Redirects",
+    "details": "URLs using the secure (HTTPS) protocol that redirect to the insecure one (HTTP). You should take notice that HTTPS is one of the ranking signals for Google. The HTTP protocol does not provide the integrity and confidentiality of data between your visitors and your site.",
+    "solution": "It is not recommended to redirect HTTPS (secure) URLs to HTTP (not secure) ones. Make sure the destination page in a redirect from HTTPS URL uses HTTPS protocol as well."
+  },
+  {
+    "code": "RED-007",
+    "name": "HTTP to HTTPS redirect",
+    "category": "Redirects",
+    "details": "URLs using HTTP protocol that redirect to HTTPS.",
+    "solution": "It is recommended to use direct links to HTTPS versions of the pages on your website to avoid unnecessary redirects."
+  },
+  {
+    "code": "RED-008",
+    "name": "Redirect chain",
+    "category": "Redirects",
+    "details": "Although chaining redirects of 5 hops or less are acceptable, they may inflict damage on the user experience, slowing down the page loading speeds. Besides, redirect chains complicate your website's internal linking for the search engine crawlers.",
+    "solution": "Identify every internal page that links to the first URL in the chain and, where possible, replace the link with the final destination URL."
+  },
+  {
+    "code": "RED-009",
+    "name": "Meta refresh redirect",
+    "category": "Redirects",
+    "details": "Pages on your website that have a meta tag in their section that sends visitors to a different URL after a certain time. Google understands this client-side redirect. However, Google needs to parse the page first to see the destination URL, which can take some time. Besides, meta refresh redirects may confuse your visitors or raise concerns about your website's security.",
+    "solution": "Review the list of pages with the meta refresh redirect. Unless this redirection method is specifically necessary on your pages, it is recommended to use a server-side 301 redirect instead."
+  },
+  {
+    "code": "CNT-001",
+    "name": "Multiple meta description tags",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. Pages that have more than one meta description tag. A meta description tag is generally used to inform the search engine with a short, informative summary of what your page is about. High-quality descriptions can sometimes be displayed in Google's search results as search snippets, helping you get higher click-through rates from SERPs. Multiple meta descriptions can confuse the search engines as they only expect one meta description tag per page.",
+    "solution": "Inspect every affected page and identify which template or component emits each meta description. Pick the most informative and quality meta description for each page and remove the extra ones."
+  },
+  {
+    "code": "CNT-002",
+    "name": "Multiple title tags",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. Pages with more than one tag. Although multiple title tags probably wouldn't cause problems for Google today, this is always a confusion because only one title will be picked to be displayed in the search results and in the browser's tab. Besides, multiple title tags are a relic of old black-hat SEO and won't add authority to your pages.",
+    "solution": "You might need help from your developer to understand why your pages have more than one title tag. Pick only one unique descriptive title for each page and make the necessary edits to the page code."
+  },
+  {
+    "code": "CNT-003",
+    "name": "Title tag missing or empty",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. Pages with an empty or missing tag. The HTML tag is a crucial component of on-page SEO. Page title will be displayed in search results and it will show up as a name of a browser's tab for those who visit your web page.",
+    "solution": "Inspect every affected page and the template responsible for its . Add a concise title perfectly describing your page content, with your targeted keyword in mind, to every web page."
+  },
+  {
+    "code": "CNT-004",
+    "name": "Meta description too short",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. Google sometimes uses tag content to generate snippets, if they think they give users a more accurate description than can be taken directly from the page content. Besides, Facebook, for example, will use tag content for link preview if the page has no 'og:description' tag. A short meta description may not summarize the content of your page in the best possible way.",
+    "solution": "Use 110–160 characters as the auditor's operational heuristic. Google does not define a fixed character limit and may truncate or generate a different snippet according to the query and available width. Google's recommendations on good descriptions"
+  },
+  {
+    "code": "CNT-005",
+    "name": "H1 tag missing or empty",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. tag is the top level heading of the page. Although it is not as crucial as your page title, an heading is a strong component of your on-page SEO. It helps search engines better understand the content on your page and its overall topic.",
+    "solution": "Each page should have its unique heading. It is recommended to use only one tag per page."
+  },
+  {
+    "code": "CNT-007",
+    "name": "Meta description tag missing or empty",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. Pages that have an empty or missing meta description tag. Without a meta description, you're missing the opportunity to present the summary of your page content to the search engines. High-quality descriptions can sometimes be displayed in Google's search results as search snippets.",
+    "solution": "You should provide a unique meta description for each indexable page on your website to help search engines and people quickly understand what your page is about."
+  },
+  {
+    "code": "CNT-008",
+    "name": "Meta description too long",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. Google sometimes uses tag content to generate snippets, if they think they give users a more accurate description than can be taken directly from the page content. Besides, Facebook, for example, will use tag content for link preview if the page has no 'og:description' tag. If Google decides to use the page meta description as a snippet, a long one can be truncated.",
+    "solution": "Use 110–160 characters as the auditor's operational heuristic. Google does not define a fixed character limit and may truncate or generate a different snippet according to the query and available width. Google's recommendations on good descriptions"
+  },
+  {
+    "code": "CNT-009",
+    "name": "Title too long",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. O excede a heurística operacional do auditor e pode ser truncado quando aparece nos resultados de pesquisa. O Google não define um limite fixo de caracteres ou píxeis. Referência: recomendações do Google para títulos.",
+    "solution": "Sinalizar, como heurística do auditor, títulos com mais de 60 caracteres ou largura renderizada superior a 600 px. Manter como referência operacional 50–60 caracteres e no máximo 600 px; encurtar preservando o assunto e os termos distintivos. Não tratar estes números como requisito do Google."
+  },
+  {
+    "code": "CNT-010",
+    "name": "Title too short",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. A short title may not describe the content of your page in the best possible way. Google may even generate an improved title from anchors, on-page text, or other sources for its SERP. See Google's recommendations on good titles.",
+    "solution": "Use 50–70 characters and at most 600 rendered pixels as the auditor's operational heuristic, not as a Google requirement. Google has no fixed title length limit and may rewrite or truncate the title according to the result context. Review all the pages reported and consider writing longer titles."
+  },
+  {
+    "code": "CNT-013",
+    "name": "Multiple H1 tags",
+    "category": "Content",
+    "details": "Escopo: páginas indexáveis. Pages that have more than one tag. It is possible to have multiple tags on your pages. John Mueller of Google mentioned that you could use as many tags on a page as you need, hinting that Google is smart enough to puzzle out your headers.",
+    "solution": "To avoid any possible confusion for search engines, you should consider keeping the recommended header hierarchy on all of your pages and use only one tag on a page."
+  },
+  {
+    "code": "CNT-019",
+    "name": "Meta description tag missing or empty",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. Pages that have an empty or missing meta description tag. Without a meta description, you're missing the opportunity to present the summary of your page content to the search engines. High-quality descriptions can sometimes be displayed in Google's search results as search snippets.",
+    "solution": "You should provide a unique meta description for each indexable page on your website to help search engines and people quickly understand what your page is about."
+  },
+  {
+    "code": "CNT-020",
+    "name": "Multiple meta description tags",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. Pages that have more than one meta description tag. A meta description tag is generally used to inform the search engine with a short, informative summary of what your page is about. High-quality descriptions can sometimes be displayed in Google's search results as search snippets, helping you get higher click-through rates from SERPs. Multiple meta descriptions can confuse the search engines as they only expect one meta description tag per page.",
+    "solution": "Inspect every affected page and identify which template or component emits each meta description. Pick the most informative and quality meta description for each page and remove the extra ones."
+  },
+  {
+    "code": "CNT-021",
+    "name": "Multiple title tags",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. Pages with more than one tag. Although multiple title tags probably wouldn't cause problems for Google today, this is always a confusion because only one title will be picked to be displayed in the search results and in the browser's tab. Besides, multiple title tags are a relic of old black-hat SEO and won't add authority to your pages.",
+    "solution": "You might need help from your developer to understand why your pages have more than one title tag. Pick only one unique descriptive title for each page and make the necessary edits to the page code."
+  },
+  {
+    "code": "CNT-022",
+    "name": "Title tag missing or empty",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. Pages with an empty or missing tag. The HTML tag is a crucial component of on-page SEO. Page title will be displayed in search results and it will show up as a name of a browser's tab for those who visit your web page.",
+    "solution": "Inspect every affected page and the template responsible for its . Add a concise title perfectly describing your page content, with your targeted keyword in mind, to every web page."
+  },
+  {
+    "code": "CNT-023",
+    "name": "H1 tag missing or empty",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. tag is the top level heading of the page. Although it is not as crucial as your page title, an heading is a strong component of your on-page SEO. It helps search engines better understand the content on your page and its overall topic.",
+    "solution": "Each page should have its unique heading. It is recommended to use only one tag per page."
+  },
+  {
+    "code": "CNT-025",
+    "name": "Meta description too long",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. Google sometimes uses tag content to generate snippets, if they think they give users a more accurate description than can be taken directly from the page content. Besides, Facebook, for example, will use tag content for link preview if the page has no 'og:description' tag. If Google decides to use the page meta description as a snippet, a long one can be truncated.",
+    "solution": "Use 110–160 characters as the auditor's operational heuristic. Google does not define a fixed character limit and may truncate or generate a different snippet according to the query and available width. Google's recommendations on good descriptions"
+  },
+  {
+    "code": "CNT-026",
+    "name": "Meta description too short",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. Google sometimes uses tag content to generate snippets, if they think they give users a more accurate description than can be taken directly from the page content. Besides, Facebook, for example, will use tag content for link preview if the page has no 'og:description' tag. A short meta description may not summarize the content of your page in the best possible way.",
+    "solution": "Use 110–160 characters as the auditor's operational heuristic. Google does not define a fixed character limit and may truncate or generate a different snippet according to the query and available width. Google's recommendations on good descriptions"
+  },
+  {
+    "code": "CNT-027",
+    "name": "Multiple H1 tags",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. Pages that have more than one tag. It is possible to have multiple tags on your pages. John Mueller of Google mentioned that you could use as many tags on a page as you need, hinting that Google is smart enough to puzzle out your headers.",
+    "solution": "To avoid any possible confusion for search engines, you should consider keeping the recommended header hierarchy on all of your pages and use only one tag on a page."
+  },
+  {
+    "code": "CNT-028",
+    "name": "Title too long",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. O excede a heurística operacional do auditor e pode ser truncado quando aparece nos resultados de pesquisa. O Google não define um limite fixo de caracteres ou píxeis. Referência: recomendações do Google para títulos.",
+    "solution": "Sinalizar, como heurística do auditor, títulos com mais de 60 caracteres ou largura renderizada superior a 600 px. Manter como referência operacional 50–60 caracteres e no máximo 600 px; encurtar preservando o assunto e os termos distintivos. Não tratar estes números como requisito do Google."
+  },
+  {
+    "code": "CNT-029",
+    "name": "Title too short",
+    "category": "Content",
+    "details": "Escopo: páginas não indexáveis. A short title may not describe the content of your page in the best possible way. Google may even generate an improved title from anchors, on-page text, or other sources for its SERP. See Google's recommendations on good titles.",
+    "solution": "Use 50–70 characters and at most 600 rendered pixels as the auditor's operational heuristic, not as a Google requirement. Google has no fixed title length limit and may rewrite or truncate the title according to the result context. Review all the pages reported and consider writing longer titles."
+  },
+  {
+    "code": "SOC-001",
+    "name": "Open Graph tags incomplete",
+    "category": "Social tags",
+    "details": "Pages with one or more of the required Open Graph tags missing. The four required Open Graph tags for every page are og:title, og:type, og:image, and og:url.",
+    "solution": "Make sure your pages have all required OG tags if you want them to look good in social feeds when shared. Please note that the URLs inside OG tags must be absolute and utilize the http:// or https:// protocols. You can find more information on the Open Graph protocol here."
+  },
+  {
+    "code": "SOC-002",
+    "name": "Open Graph URL not matching canonical",
+    "category": "Social tags",
+    "details": "Pages where the URL specified in og:url Open Graph tag and in rel=canonical tag is mismatched. Open Graph tags instruct social networks like Facebook, Pinterest, and LinkedIn what information to display whenever a URL to your page is shared. When Open Graph URL does not match the canonical one, a non-canonical version of a page will be shared on social networks.",
+    "solution": "Make sure the URL specified in og:url matches the URL of the canonical page unless you have a specific intent. Please note that URLs inside OG tags must be absolute and utilize the http:// or https:// protocols."
+  },
+  {
+    "code": "SOC-003",
+    "name": "X (Twitter) card incomplete",
+    "category": "Social tags",
+    "details": "Pages with one or more of the basic X (Twitter) card tags missing. X card instructs X what information (title, description, image, etc.) to display whenever a URL to your page is shared. Basic X cards include twitter:card, twitter:site, twitter:title, twitter:description, and twitter:image. If some of these tags are missing, X will pull data from relevant Open Graph tags.",
+    "solution": "Make sure your pages have the all basic X cards if you want them to look good in the X feed when shared. Please note that URLs inside X cards must be absolute and utilize the http:// or https:// protocols. You can find more information about X cards here."
+  },
+  {
+    "code": "SOC-004",
+    "name": "Open Graph tags missing",
+    "category": "Social tags",
+    "details": "Pages with no Open Graph tags. Open Graph tags instruct social networks like Facebook, Pinterest, and LinkedIn what information (title, description, image, etc.) to display whenever a URL to your page is shared.",
+    "solution": "Make sure your pages have Open Graph tags if you want them to look good in social feeds when shared. Please note that URLs inside OG tags must be absolute and utilize the http:// or https:// protocols. You can find more information on the Open Graph protocol here."
+  },
+  {
+    "code": "SOC-005",
+    "name": "X (Twitter) card missing",
+    "category": "Social tags",
+    "details": "Pages with no X (Twitter) card tags. X card instructs X what information (title, description, image, etc.) to display whenever a URL to your page is shared. If X cards are missing, X will pull data from relevant Open Graph tags.",
+    "solution": "If you want your pages to look good in X feed when shared, you should implement the X card tags available. Please note that URLs inside X cards must be absolute and utilize the http:// or https:// protocols. You can find more information about X cards here."
+  },
+  {
+    "code": "DUP-001",
+    "name": "Duplicate pages without canonical",
+    "category": "Duplicates",
+    "details": "Pages with duplicate or very similar content that don't specify their canonical version. Although Google asserts that they can automatically choose the best version of the content to show in their search results, it won't necessarily be page version you want to be indexed. That is why similar or duplicate pages of your website must have a \"rel=canonical\" attribute to instruct search engines to show the most authoritative (canonical) version of the page in search results.",
+    "solution": "Group affected pages by identical or near-identical content and select the preferred URL for each group. For every page in the group of duplicates, you should pick one canonical version that you want to be indexed in search results. Add its URL to the \"rel=canonical\" labeling on each page with duplicated content, including the canonical page itself."
+  },
+  {
+    "code": "LOC-001",
+    "name": "Hreflang to non-canonical",
+    "category": "Localization",
+    "details": "Pages that link to a non-canonical URL from their hreflang annotations. Linking to a non-canonical version of a page from hreflang annotations can mislead search engines. Rel=\"alternate\" hreflang=\"x\" will instruct search engines to show the translated (localized) version of a page while rel=canonical attribute will flag that this is not the authoritative (canonical) version.",
+    "solution": "Inspect every affected page and its hreflang targets. You should modify their hreflang annotations so that they point to canonical pages. If you found that the page linked from hreflang annotations got a non-canonical status unintentionally, remove its rel-canonical element or edit it to become a self-canonical."
+  },
+  {
+    "code": "LOC-002",
+    "name": "Hreflang and HTML lang mismatch",
+    "category": "Localization",
+    "details": "Pages with different language codes declared in HTML language attribute and in hreflang annotation for the URL. Although Google might not be using the HTML lang attribute today, other search engines and browsers do.",
+    "solution": "Inspect every affected page and compare its hreflang value with html lang and the actual page language. Make necessary edits so that the same language code is used in both HTML lang attribute and hreflang annotations for the URL."
+  },
+  {
+    "code": "LOC-003",
+    "name": "Hreflang annotation invalid",
+    "category": "Localization",
+    "details": "Pages with hreflang annotations where language (or language-locale) code is not valid. Hreflang helps search engines to point users to the most appropriate version of your page, depending on users' language and region. Invalid hreflang annotations will be ignored. Consequently, search engines may \"overlook\" alternate versions of your page and will not be able to point users to the most appropriate version of your page by language or region.",
+    "solution": "Validate every hreflang language or language-region code against the supported ISO syntax. Make necessary changes to these pages so that they use valid language (or language-location) code format in their hreflang annotations. Language annotations must be specified in ISO 639-1 format; locale annotations in ISO 3166-1 Alpha 2 format."
+  },
+  {
+    "code": "LOC-004",
+    "name": "Hreflang to redirect or broken page",
+    "category": "Localization",
+    "details": "Pages that have a broken URL in their hreflang annotations. If hreflang URL does not point to a valid live page, hreflang annotations may be ignored or not interpreted correctly. Consequently, search engines may \"overlook\" alternate versions of your page and will not be able to point users to the most appropriate version of your page by language or region.",
+    "solution": "Resolve every URL declared in hreflang and record whether it returns 3xx, 4xx, 5xx, or 200. You should edit the hreflang annotations on the affected pages so that they point to live pages only."
+  },
+  {
+    "code": "LOC-005",
+    "name": "HTML lang attribute invalid",
+    "category": "Localization",
+    "details": "Pages with invalid HTML language attribute. Although Google might not be using the HTML lang attribute today, other search engines and programs, such as screen readers, do to understand the language of the page.",
+    "solution": "Make necessary changes to the HTML lang attribute on the reported pages that they use valid language (or language-location) code format. Language annotations must conform to ISO 639-1 format; locale annotations (optional) must conform to ISO 3166-1 Alpha 2 format."
+  },
+  {
+    "code": "LOC-006",
+    "name": "Missing reciprocal hreflang (no return-tag)",
+    "category": "Localization",
+    "details": "Confirmation (return) links are missing for the pages declared in hreflang annotations. If page A links to page B in hreflang annotations, page B must link to page A in return. If this is not the case for all pages that use hreflang annotations, those annotations may be ignored or misinterpreted correctly. This issue can also be triggered by misused \"x-default\" hreflang. Whenever the optional \"x-default\" hreflang value is used, all pages of the hreflang group must reference the same \"default\" page.",
+    "solution": "To fix the issue, make sure all the page versions translated or targeted to users in a certain region have the same set of hreflang annotations which includes URLs to all the page versions. This will always provide return links between the alternate pages."
+  },
+  {
+    "code": "LOC-007",
+    "name": "More than one page for same language in hreflang",
+    "category": "Localization",
+    "details": "Pages that reference more than one page for the same language (or language-location) in their hreflang annotations. Announcing different pages for the same language (or language-location) in hreflang annotations can confuse search engines. Erroneous hreflang annotations will be ignored by the search engines.",
+    "solution": "Make the necessary edits to the hreflang annotations on these pages so that only one page is referenced for one language."
+  },
+  {
+    "code": "LOC-008",
+    "name": "Page referenced for more than one language in hreflang",
+    "category": "Localization",
+    "details": "Pages that were referenced for more than one language in hreflang annotations. This gives contradictory instructions to search engines as of which version of a page to show based on user's language preferences.",
+    "solution": "Inspect every URL mapped to multiple language codes and determine the single language or locale it actually represents. Pick only one language per page version and make necessary edits to hreflang annotations. One language version of a page must always be referenced for one language only. It can, however, be referenced for multiple locations with the same language, e.g. en-us, en-gb, etc."
+  },
+  {
+    "code": "LOC-009",
+    "name": "Self-reference hreflang annotation missing",
+    "category": "Localization",
+    "details": "It's a good practice for each language version of a page to list itself in addition to all other language versions. While it is not a strict requirement for Google, hreflang annotations without the self-referencing link may be ignored or misinterpreted by other search engines.",
+    "solution": "Inspect every hreflang group and verify that each page includes a self-referencing annotation. Make the necessary changes, so that each of these pages has a self-referencing hreflang annotation. For example, a Spanish version of your page must have rel=\"alternate\" hreflang=\"es\" annotation with a link to itself."
+  },
+  {
+    "code": "LOC-010",
+    "name": "Hreflang defined but HTML lang missing",
+    "category": "Localization",
+    "details": "Pages where the hreflang annotations are defined, but the HTML language tag is missing. Although Google might not be using the HTML lang attribute today, other search engines and browsers do.",
+    "solution": "Make sure your pages have the language (or language and country) code declared in the HTML lang attribute. Note that the language code must conform to ISO 639-1 format."
+  },
+  {
+    "code": "LOC-011",
+    "name": "HTML lang attribute missing",
+    "category": "Localization",
+    "details": "Pages where the language attribute is missing. Although Google might not be using the HTML lang attribute today, other search engines and browsers do.",
+    "solution": "Make sure your pages have language (or language and country) code declared in the HTML lang attribute. Note that the language code must conform to ISO 639-1 format."
+  },
+  {
+    "code": "LOC-012",
+    "name": "Not all pages from hreflang group were crawled",
+    "category": "Localization",
+    "details": "Some pages linked-to from hreflang annotations were not crawled for a certain reason.",
+    "solution": "Please check the \"no-crawl\" reason reported for these pages. This does not necessarily indicate a problem on your website. A URL from hreflang annotations could be out of the scope of a crawl or the crawl could be interrupted."
+  },
+  {
+    "code": "LOC-013",
+    "name": "X-default hreflang annotation missing",
+    "category": "Localization",
+    "details": "Pages with no x-default hreflang annotation. A set of hreflang annotations on the multiple versions of your page translated or targeted to users in a certain region should include an x-default hreflang attribute. x-default will be used for any other language (or language and location) not specified in a set of hreflang annotations.",
+    "solution": "Make sure each page on your website has an x-default hreflang attribute that points to a page not specific to one language or region. See Google's guidelines on hreflang implementation here."
+  },
+  {
+    "code": "UXP-001",
+    "name": "Slow page",
+    "category": "Usability and performance",
+    "details": "Pages on your website where HTML code took a long time to load. The loading speed of a web page is one of the ranking signals for Google. Besides, page speed affects user experience on your website. Very often visitors won't wait long for the page to load and will \"bounce\".",
+    "solution": "Page's HTML code loads slowly when it is not optimized or when the web server is slow. Make sure the HTML code is optimized on all of your pages. If this issue persists, consider moving your website to a faster server."
+  },
+  {
+    "code": "UXP-002",
+    "name": "Content is not sized correctly",
+    "category": "Usability and performance",
+    "details": "The content of your page is not sized correctly for the viewport. When your page's content width is smaller or larger than the viewport width, it may not render correctly on mobile screens. Detect this issue with a Lighthouse mobile audit using the PageSpeed Insights API.",
+    "solution": "Make sure that the page uses relative width and position values for CSS elements, and make sure images can scale as well. See Google's Responsive Web Design Basics for an overview of how to create a mobile-friendly page."
+  },
+  {
+    "code": "UXP-003",
+    "name": "Document uses plugins",
+    "category": "Usability and performance",
+    "details": "The page includes plugins, such as Java or Flash, that are not supported by most mobile browsers. Also, search engines can't index content that relies on browser plugins. Detect this issue with a Lighthouse mobile audit using the PageSpeed Insights API.",
+    "solution": "Redesign your page using modern, broadly-supported web technologies, such as HTML5. Learn more about avoiding plugins."
+  },
+  {
+    "code": "UXP-004",
+    "name": "Font size too small",
+    "category": "Usability and performance",
+    "details": "The page doesn't use legible font sizes. Font sizes less than 12px are too small to be legible and require mobile visitors to “pinch to zoom” in order to read. Detect this issue with a Lighthouse mobile audit using the PageSpeed Insights API.",
+    "solution": "Specify a viewport for your web pages and set all your font sizes to scale properly within the viewport, so the text will be visible on a device screen. Read more about best practices for font size."
+  },
+  {
+    "code": "UXP-005",
+    "name": "HTML file size too large",
+    "category": "Usability and performance",
+    "details": "Pages on your website with a large-sized HTML code. Although HTML code is pure text, it may slow down your pages, when its size is excessively large.",
+    "solution": "Review all the pages reported and consider optimizing their HTML code. Above all, you should check that your website uses text compression like GZIP."
+  },
+  {
+    "code": "UXP-006",
+    "name": "Not compressed",
+    "category": "Usability and performance",
+    "details": "Pages that do not use text compression. To reduce the size of data transferred from the web server to the user's browser, compression should be used for text-based assets: CSS, JavaScript, and HTML.",
+    "solution": "All browsers today support GZIP compression, so make sure your server is configured to enable GZIP. Other widely supported compression algorithms are Brotli and deflate."
+  },
+  {
+    "code": "UXP-012",
+    "name": "Tap targets too small or too close together",
+    "category": "Usability and performance",
+    "details": "Interactive elements like buttons and links should be large enough (48x48px), or have enough space around them, to be easy enough to tap without overlapping onto other elements. Detect this issue with a Lighthouse mobile audit using the PageSpeed Insights API.",
+    "solution": "Make sure that your touch targets are not closer together than an average fingertip width, or that your fingertip can't span multiple link targets. Read more in Accessible Tap Targets."
+  },
+  {
+    "code": "UXP-013",
+    "name": "Viewport not set",
+    "category": "Usability and performance",
+    "details": "The page does not have a tag with width or initial-scale. Many search engines rank pages based on how mobile-friendly they are. Without a viewport meta tag, mobile devices render pages at typical desktop screen widths and then scale the pages down, making them difficult to read. Detect this issue with a Lighthouse mobile audit using the PageSpeed Insights API.",
+    "solution": "Because visitors to your site use a variety of devices with varying screen sizes—from large desktop monitors, to tablets and small smartphones—your pages should specify a viewport using the meta viewport tag. Read how to correctly set the viewport."
+  },
+  {
+    "code": "IMG-001",
+    "name": "Image file size too large",
+    "category": "Images",
+    "details": "Images with large file size. Images often account for most of the page size and thus can be the main reason for slow pages on your website.",
+    "solution": "Generally, image size and quality are positively associated with its file size. Resize each image to its maximum rendered dimensions, compress it with an appropriate quality setting, use WebP or AVIF when supported, and preserve only the resolution required by responsive variants."
+  },
+  {
+    "code": "IMG-002",
+    "name": "Image broken",
+    "category": "Images",
+    "details": "Some images on your website cannot be displayed. Broken images on your pages will negatively affect the user experience, while search engines will not be able to index these images in their search results.",
+    "solution": "Review all the broken images reported and replace, fix or remove links to these images on your pages."
+  },
+  {
+    "code": "IMG-003",
+    "name": "Page has broken image",
+    "category": "Images",
+    "details": "Some pages link to image URLs that return a 4xx or 5xx HTTP status code. Broken images will not be displayed on your pages.",
+    "solution": "Most likely, the image file had been moved, renamed, or deleted but the link to it was not modified. Review the pages that have a broken link to the image and update or remove it. For 5xx HTTP status codes (server errors), you might need to address your web developer or hosting provider."
+  },
+  {
+    "code": "IMG-004",
+    "name": "HTTPS page links to HTTP image",
+    "category": "Images",
+    "details": "This issue is an instance of mixed content that occurs when HTML pages load over a secure HTTPS connection but link to resources (images, CSS, or JS) over an insecure HTTP connection. Mixed content degrades the security and user experience of your HTTPS site. Some browsers block insecure resource requests by default. If your page depends on these insecure resources, then your page might not work properly when they get blocked.",
+    "solution": "For your own domain, serve all content as HTTPS and fix your links. Often, the HTTPS version of the content already exists and this just requires adding an \"s\" to links - http:// to https://. For images hosted on other domains, use the site's HTTPS version if available. If HTTPS is not available, you can try contacting the domain and asking them if they can make the content available via HTTPS."
+  },
+  {
+    "code": "IMG-005",
+    "name": "Image redirects",
+    "category": "Images",
+    "details": "Some image URLs on your website redirect to another URL. This forces web browsers and search engine crawlers to make an additional HTTP request in order to reach the destination URL. On a vast scale, this can increase page loading times for your website.",
+    "solution": "Review the pages that have a link to the redirecting URL and replace this link with the direct link to the destination image file. If you decide to keep the links to redirecting URLs that do not belong to your website, make sure that the destination image files are relevant images."
+  },
+  {
+    "code": "IMG-006",
+    "name": "Missing alt text",
+    "category": "Images",
+    "details": "The alt attribute is used to describe your image. Search engines will use it to understand the content of your image files. Also, this text will be shown on your page if the image cannot be displayed.",
+    "solution": "Make sure each of your images has a concise and descriptive alt text. See Google's guidelines on images."
+  },
+  {
+    "code": "IMG-007",
+    "name": "Page has redirected image",
+    "category": "Images",
+    "details": "Some pages on your website link to image files via a redirect. This forces web browsers and search engine crawlers to make an additional HTTP request in order to reach the destination image URL. On a vast scale, this can increase page loading times for your website.",
+    "solution": "Review the pages that have a link to the redirecting URL and replace this link with the direct link to the destination image file. If you decide to keep the links to redirecting URLs that do not belong to your website, make sure that the destination image files are relevant images."
+  },
+  {
+    "code": "JSC-001",
+    "name": "JavaScript broken",
+    "category": "JavaScript",
+    "details": "JavaScript files that cannot be loaded. Broken JS files will negatively impact user experience on your pages. Besides, they can lower your pages' authority in the eyes on the search engines. Google, for example, is able to understand and render JS files.",
+    "solution": "Review all the JavaScript files reported and make sure they are loaded properly."
+  },
+  {
+    "code": "JSC-002",
+    "name": "Page has broken JavaScript",
+    "category": "JavaScript",
+    "details": "Some pages link to JavaScript URLs that return a 4xx or 5xx HTTP status code. Broken JS files will not be rendered on your pages.",
+    "solution": "Most likely, the JS file had been moved, renamed, or deleted but the link to it was not modified. Review the pages that have a broken link to the JS file and update or remove it. For 5xx HTTP status codes (server errors), you might need to address your web developer or hosting provider."
+  },
+  {
+    "code": "JSC-003",
+    "name": "HTTPS page links to HTTP JavaScript",
+    "category": "JavaScript",
+    "details": "This issue is an instance of mixed content that occurs when HTML pages load over a secure HTTPS connection but link to resources (images, CSS, or JS) over an insecure HTTP connection. Mixed content degrades the security and user experience of your HTTPS site. Some browsers block insecure resource requests by default. If your page depends on these insecure resources, then your page might not work properly when they get blocked.",
+    "solution": "For your own domain, serve all content as HTTPS and fix your links. Often, the HTTPS version of the content already exists and this just requires adding an \"s\" to links - http:// to https://. For JS files hosted on other domains, use the site's HTTPS version if available. If HTTPS is not available, you can try contacting the domain and asking them if they can make the content available via HTTPS."
+  },
+  {
+    "code": "JSC-004",
+    "name": "JavaScript redirects",
+    "category": "JavaScript",
+    "details": "Some JavaScript files' URLs linked from your website redirect to another URL. This forces web browsers and search engine crawlers to make an additional HTTP request in order to reach the destination URL. On a vast scale, this can increase page loading times for your website.",
+    "solution": "Review the pages that have a link to the redirecting URL and replace this link with the direct link to the destination JS file. If you decide to keep the links to redirecting URLs that do not belong to your website, make sure that the destination JS files are relevant."
+  },
+  {
+    "code": "JSC-005",
+    "name": "Page has redirected JavaScript",
+    "category": "JavaScript",
+    "details": "Some pages on your website link to JavaScript files via a redirect. This forces web browsers and search engine crawlers to make an additional HTTP request in order to reach the destination JS file URL. On a vast scale, this can increase page loading times for your website.",
+    "solution": "Review the pages that have a link to the redirecting URL and replace this link with the direct link to the destination JS file. If you decide to keep links to redirecting URLs that do not belong to your website, make sure that the destination files are relevant."
+  },
+  {
+    "code": "CSS-001",
+    "name": "CSS broken",
+    "category": "CSS",
+    "details": "CSS files that cannot be loaded while loading the page content. CSS files are plain-text files used for formatting content on web pages. If a CSS file cannot be accessed, the content on your web page will not be rendered properly, damaging the user experience on your website.",
+    "solution": "Review all the CSS files reported and make sure they are loaded properly. Learn more"
+  },
+  {
+    "code": "CSS-002",
+    "name": "CSS file size too large",
+    "category": "CSS",
+    "details": "CSS files on your website that are larger than 15 kB. Although CSS files consist of text only, they may slow down your pages when their size is too big.",
+    "solution": "Review all the CSS files reported and consider optimizing their code."
+  },
+  {
+    "code": "CSS-003",
+    "name": "CSS redirects",
+    "category": "CSS",
+    "details": "Some CSS files' URLs on your website redirect to another URL. This forces web browsers and search engine crawlers to make an additional HTTP request in order to reach the destination URL. On a vast scale, this can increase page loading times for your website.",
+    "solution": "Identify every page that references the redirecting CSS URL and replace its href with the final CSS URL. If you decide to keep the links to redirecting URLs that do not belong to your website, make sure that the destination CSS files are relevant."
+  },
+  {
+    "code": "CSS-004",
+    "name": "HTTPS page links to HTTP CSS",
+    "category": "CSS",
+    "details": "This issue is an instance of mixed content that occurs when HTML pages load over a secure HTTPS connection but link to resources (images, CSS, or JS) over an insecure HTTP connection. Mixed content degrades the security and user experience of your HTTPS site. Some browsers block insecure resource requests by default. If your page depends on these insecure resources, then your page might not work properly when they get blocked.",
+    "solution": "For your own domain, serve all content as HTTPS and fix your links. Often, the HTTPS version of the content already exists and this just requires adding an \"s\" to links - http:// to https://. For CSS files hosted on other domains, use the site's HTTPS version if available. If HTTPS is not available, you can try contacting the domain and asking them if they can make the content available via HTTPS."
+  },
+  {
+    "code": "CSS-005",
+    "name": "Page has broken CSS",
+    "category": "CSS",
+    "details": "Some pages link to CSS URLs that return a 4xx or 5xx HTTP status code. Broken CSS files will not apply the necessary styles to your pages.",
+    "solution": "Most likely, the CSS file had been moved, renamed, or deleted but the link to it was not modified. Review the pages that have a broken link to the CSS file and update or remove it. For 5xx HTTP status codes (server errors), you might need to address your web developer or hosting provider."
+  },
+  {
+    "code": "CSS-006",
+    "name": "Page has redirected CSS",
+    "category": "CSS",
+    "details": "Some pages on your website link to CSS files via a redirect. This forces web browsers and search engine crawlers to make an additional HTTP request in order to reach the destination CSS file URL. On a vast scale, this can increase page loading times for your website.",
+    "solution": "Review the pages that have a link to the redirecting URL and replace this link with the direct link to the destination CSS file. If you decide to keep the links to redirecting URLs that do not belong to your website, make sure that the destination CSS files are relevant."
+  },
+  {
+    "code": "SMP-001",
+    "name": "3XX redirect in sitemap",
+    "category": "Sitemaps",
+    "details": "URLs included in sitemap file that redirect. Sitemap must list all the pages you want search engines to crawl and index. Redirecting URLs in sitemaps can result in indexability issues on your website.",
+    "solution": "Replace the redirecting URLs in the sitemaps with the destination URL. If the destination URL is already listed, simply remove the URL that redirects to it from the sitemap file."
+  },
+  {
+    "code": "SMP-002",
+    "name": "4XX page in sitemap",
+    "category": "Sitemaps",
+    "details": "4xx pages in the sitemap send a confusing signal to search engines, asking them to crawl and index “dead” or forbidden pages. This can result in indexability issues on your website.",
+    "solution": "You should remove the 4xx URLs from your sitemaps. Make sure your sitemaps only include live URLs that return the 200 (OK) response code."
+  },
+  {
+    "code": "SMP-003",
+    "name": "5XX page in sitemap",
+    "category": "Sitemaps",
+    "details": "Pages in sitemap returning one of the 5xx HTTP status codes (Server Error). 5xx URLs in sitemaps cannot be accessed by crawlers. This can result in search engines ignoring your sitemaps. In this case, you might end up with some indexability issues on your website.",
+    "solution": "Make sure your sitemap is up-to-date and does not include any dead pages."
+  },
+  {
+    "code": "SMP-004",
+    "name": "Noindex page in sitemap",
+    "category": "Sitemaps",
+    "details": "Pages with a noindex meta tag included in sitemap. Sitemap must list all the pages you want search engines to crawl and index, while a noindex meta tag instructs search engine bots not to index a page. Such a combination is contradictory.",
+    "solution": "You should either remove these pages from the sitemap or delete the noindex tag from the page, depending on your intent."
+  },
+  {
+    "code": "SMP-005",
+    "name": "Non-canonical page in sitemap",
+    "category": "Sitemaps",
+    "details": "Non-canonical pages listed in the sitemap. The URLs flagged have a canonical element that points to a different URL. The problem is that URLs listed in the sitemap are also a canonicalization signal. With conflicting signals like this, either the URL specified in the sitemap or the one in the canonical element may be indexed.",
+    "solution": "Only include canonical URLs in your sitemaps. This should be the URLs that you want indexed."
+  },
+  {
+    "code": "SMP-006",
+    "name": "Page from sitemap timed out",
+    "category": "Sitemaps",
+    "details": "URLs in the sitemap file did not get the response from the server on time. Sitemaps must only list accessible pages.",
+    "solution": "Make sure your sitemaps only includes live accessible pages. The timeout error can be caused by server issues. You might need help from your web developer or hosting provider to find the root of this problem."
+  },
+  {
+    "code": "SMP-007",
+    "name": "Sitemap has syntax error",
+    "category": "Sitemaps",
+    "details": "We were unable to parse source code of your sitemap due to a syntax error.",
+    "solution": "Check your sitemap and make sure that special characters in its listed URLs are properly escaped."
+  },
+  {
+    "code": "SMP-008",
+    "name": "Sitemap is not accessible",
+    "category": "Sitemaps",
+    "details": "The crawler cannot access the sitemap because the server returns a blocking HTTP status or fails to complete the request.",
+    "solution": "Confirm that the sitemap exists, returns HTTP 200, and is accessible to the crawler through the firewall, WAF, and server permissions."
+  },
+  {
+    "code": "SMP-009",
+    "name": "Sitemap larger than 50MB",
+    "category": "Sitemaps",
+    "details": "The size of an uncompressed sitemap should not exceed 50 MB. Otherwise, it will be ignored by search engines.",
+    "solution": "Split your sitemap into multiple smaller sitemaps. To make it easier to manage multiple sitemaps, we recommend creating a sitemap index file."
+  },
+  {
+    "code": "SMP-010",
+    "name": "Sitemap with over 50K URLs",
+    "category": "Sitemaps",
+    "details": "A sitemap must have no more than 50,000 URLs. Otherwise, it will be ignored by search engines.",
+    "solution": "Split your sitemap into multiple smaller sitemaps. To make it easier to manage multiple sitemaps, we recommend creating a sitemap index file."
+  },
+  {
+    "code": "SMP-011",
+    "name": "Sitemap in the wrong format",
+    "category": "Sitemaps",
+    "details": "Your sitemap has unsupported format, encoding or content type. The auditor accepts XML sitemaps. Flag RSS, mRSS, Atom or text formats, invalid encoding, and an incorrect HTTP Content-Type response.",
+    "solution": "Ensure that the sitemap is UTF-8 encoded, returns the \"application/xml\" or \"text/xml\" content-type HTTP header, and that it has the correct namespace and syntax of the XML header attribute."
+  },
+  {
+    "code": "SMP-012",
+    "name": "Sitemap includes URLs out of its scope",
+    "category": "Sitemaps",
+    "details": "Your sitemap includes URLs that do not match with the sitemap location. All URLs listed in a sitemap must use the same protocol and belong to the same domain as the sitemap, unless you have all sites verified in GSC or you referenced a sitemap from an external location in your robots.txt. Learn more. For example, if your sitemap is located at https://www.example.com/sitemap.xml, it can't include URLs from https://blog.example.com, or if your sitemap file located at https://example.com/catalog/sitemap.xml, it can't include URLs starting with https://example.com/product/.",
+    "solution": "Ensure that all URLs in your sitemap belong to the same domain and path as the sitemap. You may also consider placing your sitemap at the root folder of your web server. If you use a sitemap from an external location, be sure to include a link to it in your robots.txt file. However, all URLs in the external sitemap must be from the same site as the robots.txt file."
+  },
+  {
+    "code": "SMP-013",
+    "name": "Indexable page not in sitemap",
+    "category": "Sitemaps",
+    "details": "Sitemaps help search engines to crawl and index your site. If a page is important in your website, and you want it to be easily discoverable by search engines, we recommend including it in your sitemap.",
+    "solution": "Review the list of pages found. If there's relevant pages with unique and valuable content, include them in a sitemap."
+  },
+  {
+    "code": "SMP-015",
+    "name": "Page in multiple sitemaps",
+    "category": "Sitemaps",
+    "details": "For search engines to crawl and index a page, it needs to be included in a single sitemap. If a page appears in more than one sitemap, it's not necessarily a problem, but may indicate a bug with the sitemaps setup on your website.",
+    "solution": "Check your sitemaps, and if duplicate pages got there by accident, include such pages in only one sitemap."
+  },
+  {
+    "code": "EXT-001",
+    "name": "External 3XX redirect",
+    "category": "External pages",
+    "details": "Some external URLs linked from your site redirect to another URL. A redirect on an external page could be set up after you had added a link to it from your website. Thus your link might point to a different page now.",
+    "solution": "You should manually review the external redirecting URLs linked from your website to make sure the end page has relevant content. Redirects always require caution. It is recommended to avoid redirects and use direct links to the destination pages where possible."
+  },
+  {
+    "code": "EXT-002",
+    "name": "External 4XX",
+    "category": "External pages",
+    "details": "Some external URLs your website links to result in a 4xx HTTP response code. They may harm the user experience for the visitors of your website.",
+    "solution": "Review all the pages reported and remove or replace links to them on your website. Make sure your website has links to live pages only."
+  },
+  {
+    "code": "EXT-003",
+    "name": "External 5XX",
+    "category": "External pages",
+    "details": "Some external URLs your website links to result in a 5xx HTTP response code (Server Error). This may harm the user experience for the visitors of your website.",
+    "solution": "Review all the pages reported and remove or replace links to them on your website. Make sure your website has links to live pages only."
+  },
+  {
+    "code": "EXT-004",
+    "name": "External time out",
+    "category": "External pages",
+    "details": "Some external URLs your website links to point to a page that took too long to get the response from the server. External links on your page resulting in a time-out may harm the user experience for the visitors of your website.",
+    "solution": "Review all the pages reported and remove or replace links to them on your website. Make sure your website has links to live pages only."
+  },
+  {
+    "code": "OTH-004",
+    "name": "Double slash in URL",
+    "category": "Other",
+    "details": "URLs that contain a double slash (after the domain part). Most servers are set up to ignore a double slash in the URL path. However, such URLs may be confusing for search engines as they will be interpreted as stand-alone URLs, which can result in duplicate content issues.",
+    "solution": "Normalize every affected URL by removing duplicate slashes from the path while preserving the :// scheme separator. After that, you can check the internal backlinks to the URLs with a double slash and point them to the corrected URL. This will prevent some unnecessary redirects on your website."
+  },
+  {
+    "code": "OTH-006",
+    "name": "Robots.txt has syntax error",
+    "category": "Other",
+    "details": "The crawler cannot parse robots.txt because it contains a syntax error. The auditor must treat access as disallowed until the file is valid.",
+    "solution": "You can use Google's robots.txt tester tool to check your robots.txt for errors."
+  },
+  {
+    "code": "OTH-007",
+    "name": "Robots.txt has too many redirects or redirect loop",
+    "category": "Other",
+    "details": "The request to /robots.txt enters a redirect loop or exceeds the configured redirect-hop limit. The auditor must treat the domain as disallowed until the file is reachable.",
+    "solution": "If the robots.txt URL is not supposed to redirect, change its HTTP response code to 200. For a URL that must be redirected, correct its final destination to a valid 200 URL. Confirm that the crawler user-agent and verified crawler IP ranges are not blocked by the server or WAF."
+  },
+  {
+    "code": "OTH-008",
+    "name": "Robots.txt is not accessible",
+    "category": "Other",
+    "details": "The crawler cannot access /robots.txt because the server returns a blocking status or fails to complete the request. The auditor must treat the domain as disallowed until access is restored. The likely causes are firewall, WAF, bot-protection, authentication, DNS, timeout, or server configuration.",
+    "solution": "Check that you do not have a firewall or plugin blocking bots; and if you do, to whitelist our AhrefsSiteAudit user-agent on that system. Allow the verified crawler IP ranges when the security layer requires an IP allowlist."
+  },
+  {
+    "code": "OTH-010",
+    "name": "Pages to submit to IndexNow",
+    "category": "Other",
+    "details": "IndexNow is a free protocol that enables website owners to inform search engines about the latest content updates, additions, or removals on their sites. By notifying search engines about these changes, you can ensure that they are aware of the updates instantly, rather than waiting for their bots to crawl and discover the changes themselves. This issue automatically selects pages that we recommend to submit to IndexNow. It includes: Indexable pages with content changes New indexable pages that were previously non-indexable or missing from the site Pages that have been removed or redirected",
+    "solution": "Submit newly created, materially updated, removed, or redirected URLs through IndexNow. Record the submitted URL, submission time, HTTP response, and retry status. Do not submit unchanged URLs."
+  },
+  {
+    "code": "OTH-012",
+    "name": "More than three parameters in URL",
+    "category": "Other",
+    "details": "URLs that have more than three URL parameters. A URL should contain three or fewer query string parameters. A link with more than 3 query string parameters may be unclear for search engines.",
+    "solution": "Review the URLs reported and make sure they don't have more than three query strings."
+  },
+  {
+    "code": "OTH-017",
+    "name": "Robots.txt rules disallow to crawl",
+    "category": "Other",
+    "details": "The configured audit crawler user-agent is disallowed from crawling the entire domain by robots.txt.",
+    "solution": "If the block is intentional, record the domain as unavailable for auditing. Otherwise, remove the domain-wide Disallow rule for the configured crawler user-agent. You can add the following lines into the robots.txt file on your server to allow crawling: User-agent: SeoAuditBot Allow: /"
+  },
+  {
+    "code": "OTH-018",
+    "name": "Structured data has schema.org validation error",
+    "category": "Other",
+    "details": "Structured data is a standardized way to provide information about a web page. It helps search engines to understand your content and better represent it in the search results. Structured data needs to conform to the schema.org markup format. Some pages on your site have structured data that does not meet the schema vocabulary and guidelines.",
+    "solution": "Validate each affected item against the current Schema.org vocabulary. Correct unsupported properties, invalid types, value formats, and nesting in JSON-LD, Microdata, or RDFa."
+  },
+  {
+    "code": "AIX-002",
+    "name": "robots.txt bloqueia o Googlebot",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "O Google usa o rastreamento normal do Googlebot para alimentar o índice que suporta as funcionalidades de IA. Bloquear a página, a pasta de conteúdo ou os recursos necessários no robots.txt impede a descoberta ou a leitura.",
+    "solution": "Permitir o Googlebot nas áreas públicas, manter áreas administrativas e APIs privadas bloqueadas, publicar o sitemap no robots.txt e testar a URL com o URL Inspection."
+  },
+  {
+    "code": "AIX-003",
+    "name": "OAI-SearchBot é bloqueado",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "O bloqueio no robots.txt, CDN, WAF, firewall ou rate limit pode impedir a descoberta do conteúdo público para experiências de pesquisa da OpenAI. OAI-AdsBot é relevante para validação de landing pages de anúncios; não o confundir com o crawler de pesquisa.",
+    "solution": "Se a intenção for permitir descoberta no ChatGPT Search, permitir OAI-SearchBot para os caminhos públicos e confirmar nos logs que recebe HTTP 200. Validar também regras de WAF, desafios JavaScript, CAPTCHA, autenticação e respostas 429/403. O allowlist deve combinar user-agent com os mecanismos oficiais de verificação/IP, nunca confiar apenas no texto do user-agent."
+  },
+  {
+    "code": "AIX-004",
+    "name": "PerplexityBot ou Perplexity-User não conseguem chegar ao conteúdo",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "PerplexityBot é usado para descobrir e ligar sites nos resultados da Perplexity. O acesso iniciado por uma pergunta de utilizador usa Perplexity-User e pode seguir um caminho de segurança diferente.",
+    "solution": "Permitir PerplexityBot nas áreas públicas e configurar o WAF com user-agent e as gamas IP publicadas pela Perplexity. Monitorizar ambos os agentes, atualizar as gamas IP automaticamente e não abrir endpoints privados."
+  },
+  {
+    "code": "AIX-005",
+    "name": "WAF, CAPTCHA ou desafio anti-bot interrompe o rastreamento",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "Um crawler pode receber uma página de desafio em vez do conteúdo, mesmo quando o browser humano vê a página normalmente. Um 403, 429, redirect para login ou HTML de challenge torna a página inutilizável como fonte.",
+    "solution": "Criar uma exceção de leitura limitada aos caminhos públicos, com verificação do crawler, origem/IP e método GET. Manter bloqueados POST, endpoints de escrita, áreas autenticadas e dados pessoais. Guardar no log user-agent, IP verificado, status, regra acionada e tempo de resposta."
+  },
+  {
+    "code": "AIX-006",
+    "name": "A página tem noindex",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "noindex remove a página dos resultados de pesquisa e, consequentemente, da elegibilidade para funcionalidades de IA baseadas nesse índice. É comum a diretiva ser herdada por template, ambiente de staging ou regra aplicada a toda uma categoria.",
+    "solution": "Remover noindex apenas de páginas públicas que devem ser encontradas. Confirmar o HTML final e o header HTTP; não basta alterar o template se o CDN continuar a enviar X-Robots-Tag: noindex."
+  },
+  {
+    "code": "AIX-007",
+    "name": "nosnippet, max-snippet: 0 ou data-nosnippet esconde o conteúdo útil",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "Estes controlos limitam o texto que pode ser mostrado como preview. Se forem aplicados ao preço, características, respostas, definições ou conclusões que queremos que sejam citados, o sistema pode não ter um excerto utilizável.",
+    "solution": "Rever meta[name=robots], X-Robots-Tag e todos os elementos data-nosnippet. Remover restrições apenas dos trechos públicos que devem aparecer; preservar nosnippet em dados sensíveis. Depois, pedir novo rastreamento e verificar o HTML recebido pelo crawler."
+  },
+  {
+    "code": "AIX-008",
+    "name": "X-Robots-Tag contradiz o HTML",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "A aplicação pode mostrar index,follow no HTML, enquanto o servidor, CDN ou storage envia X-Robots-Tag: noindex ou nosnippet. O header vence na decisão do crawler e é difícil de detetar olhando apenas para a página no browser.",
+    "solution": "Testar todas as variantes HTTP (domínio, idioma, trailing slash, parâmetros e redirects) e comparar headers. Centralizar a política de robots no servidor/CDN e incluir um teste automático que falhe quando HTML e headers se contradizem."
+  },
+  {
+    "code": "AIX-009",
+    "name": "Conteúdo principal só aparece depois de JavaScript",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "Renderização JavaScript pode funcionar, mas é mais frágil: depende do crawler conseguir executar os scripts, carregar APIs e não ser bloqueado por cookies, geolocalização ou autenticação. Se o HTML inicial tiver apenas um spinner, o conteúdo fica difícil de descobrir e validar.",
+    "solution": "Entregar no HTML inicial o título, resumo, factos, preço, disponibilidade, headings e links principais (SSR/SSG ou renderização no servidor). Usar JavaScript para interação, filtros e carrinho, não para esconder toda a informação indexável. Comparar HTML bruto e DOM renderizado."
+  },
+  {
+    "code": "AIX-012",
+    "name": "Canonical aponta para outra página ou existe cadeia de redirects",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "A URL que o crawler visita pode declarar canonical para uma versão diferente, redirecionar várias vezes ou ser uma variante não preferida. Isso dilui sinais e pode fazer o sistema escolher outra página como fonte.",
+    "solution": "Para cada página importante, usar uma canonical absoluta que devolva HTTP 200, apontando para a versão final. Atualizar links internos e sitemap para essa mesma URL e reduzir redirects a um salto quando possível."
+  },
+  {
+    "code": "AIX-013",
+    "name": "Sitemap não contém as páginas públicas importantes",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "Sitemap não garante indexação, mas ajuda a descobrir páginas novas e alteradas. URLs 3xx, 4xx, 5xx, noindex, não canonical ou variantes de idioma erradas enviam sinais contraditórios.",
+    "solution": "Gerar sitemaps separados quando necessário, com apenas URLs públicas, canónicas, indexáveis e HTTP 200. Atualizar lastmod quando houver alteração real e submeter o índice no Search Console; validar também os sitemaps de produtos e idiomas."
+  },
+  {
+    "code": "AIX-014",
+    "name": "Página é órfã ou tem pouca descoberta interna",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "Uma página apenas no sitemap, sem links contextuais, é mais difícil de encontrar e de relacionar com o restante site. Isto é crítico para produtos, guias e páginas de comparação que deveriam responder a perguntas específicas.",
+    "solution": "Adicionar links HTML normais a partir de categorias, guias, breadcrumbs, páginas relacionadas e navegação. Usar âncoras descritivas e ligar diretamente à canonical, sem depender de eventos JavaScript ou de pesquisa interna."
+  },
+  {
+    "code": "AIX-015",
+    "name": "Duplicação entre idiomas, parâmetros e variantes",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "Muitas URLs com o mesmo conteúdo podem competir entre si, desperdiçar rastreamento e produzir respostas com idioma, preço ou disponibilidade errados. Tradução automática sem hreflang consistente agrava a ambiguidade.",
+    "solution": "Definir uma URL canonical por variante, usar hreflang recíproco para PT/ES, alinhar lang do HTML e manter parâmetros de filtros fora do índice quando não criam conteúdo único. Cada idioma deve ter texto realmente correspondente e dados comerciais corretos."
+  },
+  {
+    "code": "AIX-025",
+    "name": "Regra de segurança permite qualquer pedido que imita um bot",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "Autorizar todo o tráfego com User-Agent: Googlebot, OAI-SearchBot ou PerplexityBot abre espaço para spoofing e pode expor áreas privadas. O user-agent é apenas um sinal.",
+    "solution": "Separar allowlist por crawler e caminho público, validar IP/origem segundo a documentação atual de cada fornecedor, limitar métodos a GET/HEAD, aplicar rate limits razoáveis e manter logs/alertas. Rever automaticamente as listas de IP, pois podem mudar."
+  },
+  {
+    "code": "AIX-027",
+    "name": "Google-Extended é confundido com o controlo de indexação do Google Search",
+    "category": "Indexação e citação em sistemas de IA",
+    "details": "Google-Extended é um controlo separado para limitar usos em determinados sistemas de IA da Google. Não é um requisito para AI Overviews/AI Mode e não substitui Googlebot, noindex ou as diretivas de preview. Bloqueá-lo ou permiti-lo não garante nem impede, por si só, a presença nos resultados de pesquisa.",
+    "solution": "Decidir a política de Google-Extended separadamente da política de rastreamento do Google Search. Para aparecer em pesquisa, manter a página tecnicamente elegível para o Googlebot; para limitar usos específicos fora da pesquisa, aplicar a diretiva documentada sem bloquear acidentalmente o conteúdo público."
+  },
+  {
+    "code": "PRD-001",
+    "name": "Product snippet sem propriedades mínimas",
+    "category": "Product snippets",
+    "details": "O objeto Product não contém name ou não contém pelo menos uma das propriedades offers, review ou aggregateRating. Sem estes dados, o item não é elegível para Product snippets.",
+    "solution": "Adicionar name e pelo menos uma propriedade válida entre offers, review e aggregateRating. Validar o JSON-LD no Rich Results Test e confirmar que os valores aparecem no conteúdo visível."
+  },
+  {
+    "code": "PRD-002",
+    "name": "aggregateRating ausente",
+    "category": "Product snippets",
+    "details": "A propriedade aggregateRating está ausente. A ausência não bloqueia o rich result quando existe uma Offer válida; é uma recomendação, não um erro.",
+    "solution": "Adicionar aggregateRating somente quando existirem avaliações reais, visíveis e verificáveis, com ratingValue e reviewCount coerentes. Não gerar classificações artificiais."
+  },
+  {
+    "code": "PRD-003",
+    "name": "review ausente",
+    "category": "Product snippets",
+    "details": "A propriedade review está ausente. O produto pode continuar elegível quando contém uma Offer válida.",
+    "solution": "Adicionar review apenas para avaliações reais apresentadas na página, incluindo autor válido e reviewRating. Manter o aviso se não existirem avaliações legítimas."
+  },
+  {
+    "code": "PRD-004",
+    "name": "Preço ou moeda da oferta inválidos",
+    "category": "Product snippets",
+    "details": "A Offer não contém preço ativo maior que zero para Merchant listings, usa formato inválido ou não associa priceCurrency em código ISO 4217.",
+    "solution": "Gerar price e priceCurrency a partir da mesma fonte usada na interface. Usar ponto decimal, sem símbolo monetário, e atualizar ou remover priceValidUntil expirado."
+  },
+  {
+    "code": "PRD-007",
+    "name": "JSON-LD do produto disponível apenas após JavaScript",
+    "category": "Product snippets",
+    "details": "O objeto Product ou os seus valores só são inseridos após execução no cliente, tornando a recolha menos previsível e podendo atrasar atualizações de preço e stock.",
+    "solution": "Emitir o JSON-LD completo no HTML inicial por SSR/SSG, usando os mesmos dados do produto renderizado. Comparar o HTML bruto com o DOM final."
+  },
+  {
+    "code": "MER-001",
+    "name": "handlingTime ausente",
+    "category": "Merchant listings",
+    "details": "Existe transitTime, mas falta shippingDetails.deliveryTime.handlingTime, que representa o intervalo entre a receção da encomenda e a saída do armazém.",
+    "solution": "Adicionar handlingTime como QuantitativeValue, com minValue, maxValue inteiros não negativos e unitCode igual a DAY ou d. Usar prazos reais."
+  },
+  {
+    "code": "MER-002",
+    "name": "shippingDetails ausente",
+    "category": "Merchant listings",
+    "details": "A Offer não fornece uma política de envio específica nem referencia uma política global.",
+    "solution": "Definir política global de envio em Organization ou Merchant Center. Para exceções por produto, adicionar Offer.shippingDetails com destino, preço e prazo completos."
+  },
+  {
+    "code": "MER-003",
+    "name": "shippingDetails incompleto",
+    "category": "Merchant listings",
+    "details": "OfferShippingDetails existe, mas falta shippingDestination.addressCountry, shippingRate ou deliveryTime; a moeda dos portes pode divergir da moeda da oferta.",
+    "solution": "Adicionar país ISO 3166-1 alpha-2, custo com moeda igual à Offer, e deliveryTime com handlingTime e transitTime. Criar uma entrada por combinação real de destino e modalidade."
+  },
+  {
+    "code": "MER-004",
+    "name": "hasMerchantReturnPolicy ausente",
+    "category": "Merchant listings",
+    "details": "A Offer não fornece uma política de devolução específica nem uma referência inequívoca para a política global.",
+    "solution": "Definir a política global em Organization ou Merchant Center. Usar Offer.hasMerchantReturnPolicy apenas para uma exceção do produto ou para referenciar a política global por @id."
+  },
+  {
+    "code": "MER-005",
+    "name": "Política de devolução incompleta",
+    "category": "Merchant listings",
+    "details": "MerchantReturnPolicy não contém applicableCountry e returnPolicyCategory, ou omite merchantReturnDays quando a categoria define uma janela finita.",
+    "solution": "Adicionar país ISO de duas letras, categoria válida e número real de dias quando aplicável. Declarar returnMethod e returnFees de acordo com a política visível."
+  },
+  {
+    "code": "GSA-006",
+    "name": "nosnippet aplicado involuntariamente",
+    "category": "Apresentação nos resultados do Google",
+    "details": "O robots meta ou X-Robots-Tag contém nosnippet. A diretiva remove o snippet textual e a pré-visualização de vídeo em Web Search, Images, Discover, AI Overviews e AI Mode; também impede o conteúdo de ser usado como entrada direta nestas funcionalidades de IA. Referência oficial.",
+    "solution": "Remover nosnippet das páginas destinadas a fornecer previews ou conteúdo à Pesquisa. Mantê-lo apenas quando a exclusão total de snippets for uma decisão explícita."
+  },
+  {
+    "code": "GSA-007",
+    "name": "max-snippet inválido ou demasiado restritivo",
+    "category": "Apresentação nos resultados do Google",
+    "details": "max-snippet contém valor inválido, 0 ou um limite inferior ao necessário. 0 equivale a nosnippet, -1 não impõe limite e valores positivos definem o máximo de caracteres; a regra também limita o texto diretamente utilizável em AI Overviews e AI Mode. Referência oficial.",
+    "solution": "Omitir a diretiva ou usar max-snippet:-1 quando não existe limitação editorial. Usar um inteiro positivo apenas quando houver uma política concreta e testar o impacto nos snippets."
+  },
+  {
+    "code": "GSA-008",
+    "name": "max-image-preview restringe imagens grandes",
+    "category": "Apresentação nos resultados do Google",
+    "details": "A página usa max-image-preview:none ou standard apesar de depender de miniaturas grandes. Os valores válidos são none, standard e large; large permite uma imagem até à largura do viewport. Referência oficial.",
+    "solution": "Definir max-image-preview:large quando forem desejadas imagens grandes, especialmente para conteúdo elegível ao Discover."
+  },
+  {
+    "code": "GSA-009",
+    "name": "max-video-preview restringe a pré-visualização",
+    "category": "Apresentação nos resultados do Google",
+    "details": "max-video-preview é inválido, 0 ou inferior à duração desejada. O valor representa segundos; 0 permite no máximo uma imagem estática e -1 não impõe limite. Referência oficial.",
+    "solution": "Usar um número de segundos adequado ou max-video-preview:-1 quando forem desejadas pré-visualizações em movimento sem limite definido pelo site."
+  },
+  {
+    "code": "GSA-011",
+    "name": "Deep link para a passagem relevante é bloqueado",
+    "category": "Apresentação nos resultados do Google",
+    "details": "O conteúdo-alvo está oculto numa tab ou accordion, JavaScript força o scroll para o topo ou remove o fragmento ... através da History API. Isto pode impedir que um resultado abra diretamente na passagem relevante. Referência oficial.",
+    "solution": "Tornar o conteúdo-alvo imediatamente acessível, abrir automaticamente o componente que o contém e preservar o fragmento e a posição de scroll no carregamento."
+  },
+  {
+    "code": "GSA-013",
+    "name": "Tradução automática desativada involuntariamente",
+    "category": "Apresentação nos resultados do Google",
+    "details": "O robots meta ou X-Robots-Tag contém notranslate, impedindo a tradução do title link, snippet e página nas funcionalidades de tradução do Google. Referência oficial.",
+    "solution": "Remover notranslate quando o conteúdo puder aparecer em resultados traduzidos. Mantê-lo apenas por decisão editorial ou jurídica explícita."
+  },
+  {
+    "code": "IDN-001",
+    "name": "Favicon não declarado na homepage",
+    "category": "Identidade visual e nome do site",
+    "details": "A homepage do domínio ou subdomínio não contém nem outro rel suportado: icon, shortcut icon, apple-touch-icon ou apple-touch-icon-precomposed. O Google suporta um favicon por hostname, não por subdiretório. Referência oficial.",
+    "solution": "Declarar o favicon no da homepage raiz de cada hostname. O href pode ser absoluto, relativo ou apontar para uma CDN."
+  },
+  {
+    "code": "IDN-002",
+    "name": "Favicon bloqueado, instável ou com dimensão inválida",
+    "category": "Identidade visual e nome do site",
+    "details": "Googlebot não consegue rastrear a homepage, Googlebot-Image não obtém o ficheiro, o URL expira ou muda, ou a imagem não é quadrada e mede menos de 8×8 px. O mínimo é 8×8 px e o Google recomenda mais de 48×48 px. Referência oficial.",
+    "solution": "Publicar uma imagem 1:1, preferencialmente superior a 48×48 px, num URL estável; remover bloqueios de robots, autenticação e firewall da homepage e do ficheiro."
+  },
+  {
+    "code": "IDN-003",
+    "name": "WebSite ausente ou fora da homepage raiz",
+    "category": "Identidade visual e nome do site",
+    "details": "Não existe um nó WebSite na homepage do domínio ou subdomínio, ou este só existe numa subpasta. Site names são suportados ao nível de domínio e subdomínio, não de subdiretório. Referência oficial.",
+    "solution": "Adicionar um único nó WebSite na homepage raiz com name e url; url deve ser o URL canónico da homepage."
+  },
+  {
+    "code": "IDN-004",
+    "name": "Múltiplos nós WebSite ou sinais de nome inconsistentes",
+    "category": "Identidade visual e nome do site",
+    "details": "A homepage contém nós WebSite concorrentes, duplicados da homepage publicam dados diferentes, ou WebSite.name, og:sitename, , headings e texto principal apresentam nomes incompatíveis. Referência oficial.",
+    "solution": "Consolidar as propriedades num único nó e publicar os mesmos dados em duplicados HTTP/HTTPS e www/non-www. Usar o mesmo nome em todas as fontes."
+  },
+  {
+    "code": "DAT-002",
+    "name": "Datas estruturadas ausentes ou divergentes",
+    "category": "Datas editoriais",
+    "details": "Article, BlogPosting, NewsArticle, VideoObject ou outro subtipo de CreativeWork omite datePublished/dateModified, ou os valores não coincidem com a página visível. Referência oficial.",
+    "solution": "Adicionar as propriedades aplicáveis e gerar valores visíveis e estruturados da mesma fonte, sem inventar datas."
+  },
+  {
+    "code": "DAT-003",
+    "name": "Timestamp, timezone ou significado da data incorretos",
+    "category": "Datas editoriais",
+    "details": "O timestamp inclui hora sem offset correto, ignora horário de verão, está no futuro ou representa o evento narrado em vez da publicação ou alteração significativa da página. Referência oficial.",
+    "solution": "Usar ISO 8601 com offset correto quando a hora for declarada. Reservar datePublished e dateModified às datas editoriais reais e representar acontecimentos com Event."
+  },
+  {
+    "code": "GIM-001",
+    "name": "Imagem indexável implementada apenas em CSS",
+    "category": "Google Images e Discover",
+    "details": "Uma imagem importante existe apenas em background-image ou outra propriedade CSS. O Google Images descobre imagens em src de e não indexa imagens CSS como conteúdo da página. Referência oficial.",
+    "solution": "Inserir a imagem num elemento ; manter CSS apenas para apresentação."
+  },
+  {
+    "code": "GIM-002",
+    "name": "Imagem responsiva sem fallback src",
+    "category": "Google Images e Discover",
+    "details": "O elemento usa apenas srcset, ou não contém um de fallback. Referência oficial.",
+    "solution": "Fornecer sempre , incluindo dentro de , e usar srcset/source como melhoria responsiva."
+  },
+  {
+    "code": "GIM-003",
+    "name": "Formato ou URL de imagem inadequados",
+    "category": "Google Images e Discover",
+    "details": "O recurso não usa BMP, GIF, JPEG, PNG, WebP, SVG ou AVIF, a extensão não corresponde ao tipo real, ou o mesmo ficheiro é servido por vários URLs variáveis. Referência oficial.",
+    "solution": "Converter para formato suportado, alinhar extensão e MIME e reutilizar um URL canónico, estável e persistente para o mesmo recurso."
+  },
+  {
+    "code": "GIM-004",
+    "name": "Imagens importantes não são descobertas",
+    "category": "Google Images e Discover",
+    "details": "Imagens são carregadas por mecanismos não rastreáveis e não aparecem no HTML nem num image sitemap. Quando o sitemap aponta para uma CDN não verificada, os erros de rastreamento dessa propriedade podem passar despercebidos. Referência oficial.",
+    "solution": "Usar , incluir imagens difíceis de descobrir num image sitemap e verificar o domínio da CDN no Search Console."
+  },
+  {
+    "code": "VID-001",
+    "name": "Vídeo não incorporado num elemento reconhecido",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "O vídeo não aparece no HTML renderizado através de , , ou , ou depende de um fragmento ... para ser descoberto. Referência oficial.",
+    "solution": "Usar um elemento reconhecido e disponibilizar a página e o recurso em URLs HTTP(S) completos e rastreáveis."
+  },
+  {
+    "code": "VID-002",
+    "name": "Vídeo depende de interação ou desaparece quando a API falha",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "O player só é criado após clique, swipe, escrita ou outra ação; quando JavaScript ou Media Source API falha, nenhum container permanece no DOM renderizado. Referência oficial.",
+    "solution": "Renderizar o container e os metadados sem exigir interação e mantê-los no DOM mesmo quando a origem multimédia falhar."
+  },
+  {
+    "code": "VID-004",
+    "name": "Watch pages sem título e descrição exclusivos",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "Várias páginas de vídeo partilham ou meta description, ou os valores não descrevem o vídeo específico. Referência oficial.",
+    "solution": "Criar título e descrição exclusivos e coerentes para cada watch page."
+  },
+  {
+    "code": "VID-005",
+    "name": "Formato ou URL do vídeo não suportados",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "O ficheiro usa Data URL, formato não suportado ou URL temporário. Os formatos suportados incluem 3GP, 3G2, ASF, AVI, DivX, M2V, M3U, M3U8, M4V, MKV, MOV, MP4, MPEG, OGV, QVT, RAM, RM, VOB, WebM, WMV e XAP. Referência oficial.",
+    "solution": "Publicar o vídeo num formato suportado e num URL HTTP(S) único, estável e persistente."
+  },
+  {
+    "code": "VID-006",
+    "name": "Google não consegue obter os bytes do vídeo",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "O ficheiro ou stream M3U8 é bloqueado por robots, autenticação, firewall ou limitação de capacidade. O acesso aos bytes é necessário para previews e Key Moments. Referência oficial.",
+    "solution": "Permitir acesso ao Googlebot e fornecer VideoObject.contentUrl para um ficheiro suportado sempre que possível."
+  },
+  {
+    "code": "VID-007",
+    "name": "Thumbnail de vídeo inválida",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "A thumbnail está ausente, mede menos de 60×30 px, é bloqueada, usa formato não suportado ou é excessivamente transparente. São suportados BMP, GIF, JPEG, PNG, WebP, SVG e AVIF; pelo menos 80% dos píxeis devem ter alpha superior a 250. Referência oficial.",
+    "solution": "Publicar uma thumbnail rastreável, estável, maior que o mínimo e maioritariamente opaca."
+  },
+  {
+    "code": "VID-008",
+    "name": "Thumbnail ou metadados contraditórios entre fontes",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "poster, video:thumbnailloc, thumbnailUrl e og:video:image apontam para imagens diferentes, ou name e description divergem entre JSON-LD, sitemap, OGP e página visível. Referência oficial.",
+    "solution": "Usar o mesmo URL de thumbnail e valores únicos por vídeo em todas as fontes, gerados a partir do mesmo registo."
+  },
+  {
+    "code": "VID-009",
+    "name": "URL do player ou ficheiro no campo errado",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "A URL do player foi usada em contentUrl, ou a URL dos bytes foi usada em embedUrl. Referência oficial.",
+    "solution": "Usar embedUrl/video:playerloc para o player e contentUrl/video:contentloc para o ficheiro real."
+  },
+  {
+    "code": "VID-010",
+    "name": "Key Moments mal implementados",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "Um vídeo com capítulos não usa Clip/SeekToAction, ou os objetos não contêm offsets e deep links corretos. Em Clip, cada segmento precisa de name, startOffset e url; em SeekToAction, o target precisa do placeholder {seektosecondnumber} e startOffset-input deve ser required name=seektosecondnumber. Referência oficial.",
+    "solution": "Implementar um dos métodos numa watch page onde o vídeo seja reproduzível e o ficheiro esteja acessível. Usar inícios únicos e URLs que abram no segundo indicado."
+  },
+  {
+    "code": "VID-011",
+    "name": "Livestream sem BroadcastEvent",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "Uma transmissão em direto não contém BroadcastEvent com isLiveBroadcast:true, startDate e, após terminar, endDate. Referência oficial.",
+    "solution": "Aninhar BroadcastEvent no VideoObject, usar datas ISO 8601 e atualizar o estado ao iniciar, terminar ou alterar a transmissão."
+  },
+  {
+    "code": "VID-012",
+    "name": "Data de expiração ou restrição geográfica inválida",
+    "category": "Vídeo na Pesquisa Google",
+    "details": "expires/video:expirationdate contém uma data passada para conteúdo ainda disponível, ou existem várias video:restriction, códigos de país inválidos ou relationship ausente. A restrição aceita uma tag, códigos ISO 3166-1 separados por espaços e relationship=\"allow\" ou \"deny\". Referência oficial.",
+    "solution": "Corrigir ou omitir a expiração quando o vídeo não expira. Consolidar a restrição numa única regra válida ou usar regionsAllowed/ineligibleRegion."
+  },
+  {
+    "code": "SDG-001",
+    "name": "Vocabulário ou formato de dados estruturados não suportado",
+    "category": "Dados estruturados — regras gerais",
+    "details": "O markup usa data-vocabulary.org, tipo/propriedade não suportado pelo guia aplicável ou formato diferente de JSON-LD, Microdata e RDFa. data-vocabulary.org não é elegível para rich results; o Google recomenda JSON-LD por facilidade de manutenção. Referência oficial.",
+    "solution": "Migrar para schema.org num formato suportado e usar a documentação específica do Google Search Central como referência normativa de elegibilidade."
+  },
+  {
+    "code": "SDG-003",
+    "name": "Objeto sem propriedades obrigatórias",
+    "category": "Dados estruturados — regras gerais",
+    "details": "Um objeto de rich result omite uma propriedade marcada como Required ou contém valor, tipo ou formato inválido. A ausência de qualquer requisito bloqueia a elegibilidade do objeto; propriedades recomendadas em falta não bloqueiam, mas reduzem a informação disponível. Referência oficial.",
+    "solution": "Validar objeto a objeto no Rich Results Test e preencher todos os campos obrigatórios, incluindo os de objetos aninhados. Adicionar propriedades recomendadas apenas quando completas, exatas e aplicáveis."
+  },
+  {
+    "code": "SDG-004",
+    "name": "Página ou recurso estruturado inacessível ao Google",
+    "category": "Dados estruturados — regras gerais",
+    "details": "A URL com markup, imagem, vídeo ou recurso referenciado é bloqueada por robots.txt, noindex, autenticação, WAF, erro HTTP ou outra regra de acesso. Markup válido não compensa inacessibilidade. Referência oficial.",
+    "solution": "Permitir rastreamento e renderização de páginas e recursos elegíveis, devolver 200 e confirmar o HTML renderizado e os recursos na URL Inspection."
+  },
+  {
+    "code": "SDG-005",
+    "name": "Dados estruturados ausentes em duplicados da página",
+    "category": "Dados estruturados — regras gerais",
+    "details": "Apenas a canonical contém markup, enquanto duplicados do mesmo conteúdo omitem ou contradizem os dados estruturados. O Google recomenda a mesma marcação em todos os duplicados. Referência oficial.",
+    "solution": "Publicar os mesmos objetos e valores em todas as versões duplicadas e manter os sinais de canonicalização alinhados."
+  },
+  {
+    "code": "SDG-007",
+    "name": "Objetos relacionados não estão ligados",
+    "category": "Dados estruturados — regras gerais",
+    "details": "Objetos que representam o mesmo assunto são declarados separadamente sem nesting nem @id, impedindo o Google de saber, por exemplo, que um vídeo ou review pertence à entidade principal. Referência oficial.",
+    "solution": "Aninhar objetos sob a entidade principal ou ligar blocos separados com o mesmo @id; evitar criar entidades concorrentes para o mesmo item."
+  },
+  {
+    "code": "SDG-008",
+    "name": "Itens estruturados visíveis estão incompletos",
+    "category": "Dados estruturados — regras gerais",
+    "details": "A página exibe vários itens, comentários ou avaliações, mas o markup descreve apenas uma parte seletiva. Isto pode ser enganador quando o rich result sugere cobertura completa. Referência oficial.",
+    "solution": "Marcar todos os itens visíveis aplicáveis e manter contagens e agregações consistentes com o conjunto completo."
+  },
+  {
+    "code": "SDG-009",
+    "name": "Dados estruturados gerados por JavaScript divergem da página",
+    "category": "Dados estruturados — regras gerais",
+    "details": "JSON-LD criado por JavaScript ou Google Tag Manager duplica dados manualmente e não acompanha alterações do conteúdo, ou não existe no DOM renderizado. Em produtos com preço e disponibilidade voláteis, a geração dinâmica pode tornar os crawls de Shopping menos frequentes e menos fiáveis. Referência oficial.",
+    "solution": "Extrair os valores da mesma fonte que renderiza a página, preferir HTML inicial ou server-side rendering para dados comerciais voláteis e testar o URL publicado no Rich Results Test e na URL Inspection."
+  },
+  {
+    "code": "EDS-001",
+    "name": "Article sem propriedades editoriais úteis",
+    "category": "Dados estruturados — conteúdo editorial e navegação",
+    "details": "Article, NewsArticle ou BlogPosting omite author, author.name, headline, image, datePublished ou dateModified. Atualmente o Google não define propriedades obrigatórias para Article, mas estes campos melhoram o entendimento de título, autoria, imagem e datas. Referência oficial.",
+    "solution": "Preencher as propriedades aplicáveis com valores coincidentes com a página e datas ISO 8601 com fuso horário quando a hora for declarada."
+  },
+  {
+    "code": "EDS-002",
+    "name": "Autores de Article agregados ou mal tipados",
+    "category": "Dados estruturados — conteúdo editorial e navegação",
+    "details": "Vários autores são concatenados num único author.name, Person/Organization é usado incorretamente, o nome contém cargo, prefixo ou texto editorial, ou autores visíveis estão ausentes. Referência oficial.",
+    "solution": "Criar um objeto por autor, usar o tipo correto, manter author.name apenas com o nome e ligar author.url/sameAs a um perfil canónico."
+  },
+  {
+    "code": "EDS-003",
+    "name": "Imagem editorial de Article inadequada",
+    "category": "Dados estruturados — conteúdo editorial e navegação",
+    "details": "image está ausente, bloqueada, não é representativa ou tem baixa resolução. O Google recomenda imagens rastreáveis e indexáveis com pelo menos 50.000 píxeis e versões 16:9, 4:3 e 1:1. Referência oficial.",
+    "solution": "Fornecer URLs estáveis das três proporções e garantir relevância, formato suportado e acesso pelo Googlebot-Image."
+  },
+  {
+    "code": "EDS-004",
+    "name": "Canonical incorreto em artigo paginado",
+    "category": "Dados estruturados — conteúdo editorial e navegação",
+    "details": "As partes 2 e seguintes canonicalizam para a página 1 sem existir uma página view-all equivalente. Referência oficial.",
+    "solution": "Canonicalizar cada parte para si própria ou canonicalizar todas as partes para uma página view-all que contém o artigo completo."
+  },
+  {
+    "code": "EDS-005",
+    "name": "BreadcrumbList incompleto ou desordenado",
+    "category": "Dados estruturados — conteúdo editorial e navegação",
+    "details": "O objeto tem menos de dois ListItem, omite itemListElement, usa position não inteiro, duplicado ou não ordenado a partir de 1, ou omite name/item onde são necessários. O último item pode omitir item, sendo assumido o URL atual. Referência oficial.",
+    "solution": "Emitir pelo menos dois itens ordenados, com nomes visíveis e URLs absolutas válidas; manter o markup coerente com o breadcrumb apresentado."
+  },
+  {
+    "code": "EDS-007",
+    "name": "ItemList de carousel inválido",
+    "category": "Dados estruturados — conteúdo editorial e navegação",
+    "details": "A lista tem menos de dois itemListElement, mistura tipos, não inclui todos os itens visíveis ou usa posições ausentes, duplicadas ou fora de ordem. O carousel normal suporta Course, Movie, Recipe e Restaurant, com itens homogéneos. Referência oficial.",
+    "solution": "Incluir todos os itens visíveis do mesmo tipo, na ordem apresentada, com posições consecutivas a partir de 1."
+  },
+  {
+    "code": "EDS-008",
+    "name": "URLs de carousel incompatíveis com o modelo da página",
+    "category": "Dados estruturados — conteúdo editorial e navegação",
+    "details": "Numa summary page, os itens apontam para URLs repetidas ou fora do domínio; numa all-in-one page, apontam para outra página ou não usam âncoras junto do conteúdo. Referência oficial.",
+    "solution": "Em summary pages, usar URLs canónicas únicas no mesmo domínio. Em all-in-one pages, usar o URL atual com fragmentos que abram no item correspondente."
+  },
+  {
+    "code": "EDS-009",
+    "name": "Carousel beta sem estrutura mínima de summary page",
+    "category": "Dados estruturados — conteúdo editorial e navegação",
+    "details": "O ItemList beta contém menos de três entidades, não está numa página de resumo/categoria, não liga a páginas de detalhe autónomas no mesmo domínio ou omite itens visíveis. Para scroll infinito, devem ser marcados pelo menos os itens inicialmente carregados. Referência oficial.",
+    "solution": "Marcar na summary page pelo menos três LocalBusiness, Product ou Event, cada um com position, name, image e URL canónica de detalhe; incluir todos os itens carregados na página ou viewport inicial."
+  },
+  {
+    "code": "EDU-001",
+    "name": "Course list sem quantidade ou estrutura mínima",
+    "category": "Dados estruturados — cursos, datasets e comunidades",
+    "details": "A página contém menos de três cursos ou não usa ItemList/carousel numa summary ou all-in-one page. O conteúdo deve ser curricular, ter resultado educativo, instrutores e alunos. Referência oficial.",
+    "solution": "Marcar apenas cursos elegíveis e publicar pelo menos três objetos Course no modelo de lista adequado."
+  },
+  {
+    "code": "EDU-002",
+    "name": "Course sem campos válidos",
+    "category": "Dados estruturados — cursos, datasets e comunidades",
+    "details": "name ou description está ausente, provider não representa a organização real ou o título contém preço, desconto ou promoção. name e description são obrigatórios; a descrição tem limite de apresentação de 60 caracteres. Referência oficial.",
+    "solution": "Usar nome factual, descrição concisa e Organization real como provider; manter URLs canónicas e posições válidas no ItemList."
+  },
+  {
+    "code": "EDU-003",
+    "name": "Dataset sem nome ou descrição válida",
+    "category": "Dados estruturados — cursos, datasets e comunidades",
+    "details": "Dataset omite name, usa o mesmo nome para conjuntos distintos ou tem description com menos de 50 ou mais de 5.000 caracteres. O Dataset Search usa apenas os primeiros 5.000 caracteres das propriedades textuais. Referência oficial.",
+    "solution": "Usar nome distintivo e descrição factual entre 50 e 5.000 caracteres."
+  },
+  {
+    "code": "EDU-004",
+    "name": "Distribuição de dataset sem URL de download",
+    "category": "Dados estruturados — cursos, datasets e comunidades",
+    "details": "DataDownload/distribution existe mas distribution.contentUrl está ausente ou não aponta para um download; objetos aninhados em hasPart/isPartOf não cumprem os requisitos de Dataset. Referência oficial.",
+    "solution": "Fornecer URL funcional do ficheiro, encodingFormat aplicável e name/description completos em cada subdataset."
+  },
+  {
+    "code": "EDU-005",
+    "name": "Dataset sem proveniência ou licença",
+    "category": "Dados estruturados — cursos, datasets e comunidades",
+    "details": "Faltam identifier, license, creator/publisher e sameAs quando esses dados existem. citation identifica publicações relacionadas, não substitui a proveniência do dataset. Referência oficial.",
+    "solution": "Adicionar DOI ou identificador estável, licença canónica, criador/editor e sameAs; reservar citation para artigos associados."
+  },
+  {
+    "code": "EDU-007",
+    "name": "Publicação ou comentário sem campos obrigatórios",
+    "category": "Dados estruturados — cursos, datasets e comunidades",
+    "details": "O post ou comentário omite author e author.name, datePublished ISO 8601 ou pelo menos um de text, image e video. A exceção é um post representado noutra página através de URL externa. Referência oficial.",
+    "solution": "Marcar autor, data e conteúdo completo em cada nó e preservar a hierarquia de comments."
+  },
+  {
+    "code": "EDU-008",
+    "name": "Metadados da discussão incoerentes",
+    "category": "Dados estruturados — cursos, datasets e comunidades",
+    "details": "O URL do post não aponta à primeira página da thread, commentCount/interactionStatistic divergem do conteúdo ou texto gerado por IA omite digitalSourceType. A ausência de digitalSourceType é interpretada como conteúdo humano. Referência oficial.",
+    "solution": "Usar a primeira página como URL da thread, corrigir contagens e declarar TrainedAlgorithmicMediaDigitalSource para LLM ou AlgorithmicMediaDigitalSource para automação simples."
+  },
+  {
+    "code": "EDU-009",
+    "name": "Education Q&A fora do modelo de flashcards",
+    "category": "Dados estruturados — cursos, datasets e comunidades",
+    "details": "O markup não está na leaf page, as perguntas não são visíveis ou educativas, falta um par pergunta/resposta, ou eduQuestionType difere de Flashcard. Quiz.hasPart deve conter uma ou mais Question; cada uma precisa de acceptedAnswer, eduQuestionType: Flashcard e text; Answer precisa de text. Referência oficial.",
+    "solution": "Marcar flashcards visíveis na página mais detalhada. Usar QAPage para uma única pergunta com respostas submetidas por utilizadores."
+  },
+  {
+    "code": "EDU-011",
+    "name": "QAPage sem propriedades mínimas",
+    "category": "Dados estruturados — cursos, datasets e comunidades",
+    "details": "Falta mainEntity: Question, answerCount, Question.text ou acceptedAnswer/suggestedAnswer quando existem respostas; Answer.text não contém a resposta completa. Perguntas com answerCount:0 não são elegíveis. Referência oficial.",
+    "solution": "Marcar pergunta e respostas integrais, separar Answer de Comment e garantir que answerCount corresponde ao total de respostas."
+  },
+  {
+    "code": "BIZ-002",
+    "name": "EmployerAggregateRating sem propriedades mínimas",
+    "category": "Dados estruturados — negócios, eventos e emprego",
+    "details": "O objeto omite itemReviewed: Organization, ratingValue ou ambos ratingCount e reviewCount. A escala predefinida é 1–5; noutra escala, bestRating e worstRating são necessários. Referência oficial.",
+    "solution": "Completar o objeto e calcular notas e contagens a partir das avaliações efetivamente publicadas."
+  },
+  {
+    "code": "BIZ-004",
+    "name": "Event sem propriedades obrigatórias",
+    "category": "Dados estruturados — negócios, eventos e emprego",
+    "details": "O objeto omite name, startDate, location: Place, location.name ou location.address: PostalAddress detalhado. Referência oficial.",
+    "solution": "Completar nome, data ISO 8601 e local físico; garantir correspondência integral com a página visível."
+  },
+  {
+    "code": "BIZ-005",
+    "name": "Datas, estado ou oferta do evento incompletos",
+    "category": "Dados estruturados — negócios, eventos e emprego",
+    "details": "A hora não tem offset, evento multiday omite endDate, reagendamento/cancelamento não atualiza eventStatus e previousStartDate, ou a oferta omite url, price, priceCurrency, availability ou validFrom aplicáveis. Referência oficial.",
+    "solution": "Usar ISO 8601 com offset, não inventar 00:00 quando a hora é desconhecida, e atualizar estado, datas e ofertas em simultâneo com a página."
+  },
+  {
+    "code": "BIZ-006",
+    "name": "JobPosting sem campos obrigatórios",
+    "category": "Dados estruturados — negócios, eventos e emprego",
+    "details": "Falta datePosted, description, hiringOrganization, title ou jobLocation físico com addressCountry. Para emprego integralmente remoto, jobLocation pode ser omitido apenas com jobLocationType: TELECOMMUTE e applicantLocationRequirements com pelo menos um país. Referência oficial.",
+    "solution": "Completar todos os campos segundo a modalidade real e fornecer endereço ou países elegíveis conforme aplicável."
+  },
+  {
+    "code": "BIZ-008",
+    "name": "Vaga expirada continua marcada",
+    "category": "Dados estruturados — negócios, eventos e emprego",
+    "details": "validThrough já passou ou a vaga foi preenchida/fechada mas a página continua indexável com JobPosting. validThrough é obrigatório quando existe uma data de expiração. Referência oficial.",
+    "solution": "Remover o markup, devolver 404/410 ou atualizar validThrough apenas se a vaga for realmente reaberta; retirar vagas preenchidas antes da expiração."
+  },
+  {
+    "code": "BIZ-010",
+    "name": "LocalBusiness sem propriedades mínimas",
+    "category": "Dados estruturados — negócios, eventos e emprego",
+    "details": "O objeto omite name ou address: PostalAddress correspondente a uma localização física. Referência oficial.",
+    "solution": "Usar o subtipo mais específico aplicável e fornecer o endereço completo segundo o formato do país."
+  },
+  {
+    "code": "BIZ-011",
+    "name": "Localização, horário ou contacto malformados",
+    "category": "Dados estruturados — negócios, eventos e emprego",
+    "details": "geo tem menos de cinco casas decimais, o telefone omite indicativo, opens/closes não usam hh:mm:ss, priceRange tem 100 ou mais caracteres ou url não identifica a localização. Referência oficial.",
+    "solution": "Completar geo, telephone e openingHoursSpecification. Para 24 horas usar 00:00–23:59; para fechado usar 00:00–00:00; usar validFrom/validThrough em horários sazonais."
+  },
+  {
+    "code": "BIZ-013",
+    "name": "Logo de Organization inadequado",
+    "category": "Dados estruturados — negócios, eventos e emprego",
+    "details": "O logo mede menos de 112×112 px, está bloqueado, não é indexável, usa formato não suportado ou ImageObject omite contentUrl/url. Referência oficial.",
+    "solution": "Fornecer um logo representativo com pelo menos 112×112 px, num formato suportado, URL estável e acesso pelo Googlebot-Image."
+  },
+  {
+    "code": "BIZ-015",
+    "name": "ProfilePage sem propriedades mínimas",
+    "category": "Dados estruturados — negócios, eventos e emprego",
+    "details": "Falta mainEntity: Person/Organization, ou a entidade não contém name nem alternateName. Referência oficial.",
+    "solution": "Aninhar a entidade principal com o tipo correto e pelo menos uma identificação válida."
+  },
+  {
+    "code": "SPC-001",
+    "name": "ImageObject sem metadados mínimos",
+    "category": "Dados estruturados — imagens, aplicações e conteúdo especializado",
+    "details": "O objeto omite contentUrl e não contém pelo menos uma propriedade de autoria ou direitos entre creator, creditText, copyrightNotice e license. url ainda é suportado, mas contentUrl identifica a imagem com maior precisão. Referência oficial.",
+    "solution": "Marcar cada ocorrência da imagem com contentUrl e metadados verdadeiros de autoria, crédito ou direitos."
+  },
+  {
+    "code": "SPC-002",
+    "name": "Imagem não é elegível ao badge Licensable",
+    "category": "Dados estruturados — imagens, aplicações e conteúdo especializado",
+    "details": "ImageObject não contém license. Quando IPTC e structured data divergem, o Google usa os dados estruturados. Referência oficial.",
+    "solution": "Adicionar o URL da licença e, quando existir, acquireLicensePage; sincronizar os valores com os metadados incorporados."
+  },
+  {
+    "code": "SPC-003",
+    "name": "Movie sem nome ou poster válido",
+    "category": "Dados estruturados — imagens, aplicações e conteúdo especializado",
+    "details": "O objeto em carousel omite name ou image, ou a imagem está bloqueada, não é representativa, usa formato inadequado ou tem proporção muito distante de 6:9. Referência oficial.",
+    "solution": "Fornecer nome exato e poster rastreável de alta resolução em JPG, PNG ou GIF, com proporção 6:9; completar dateCreated, director e ratings reais quando existirem."
+  },
+  {
+    "code": "SPC-005",
+    "name": "MathSolver sem propriedades mínimas",
+    "category": "Dados estruturados — imagens, aplicações e conteúdo especializado",
+    "details": "Falta potentialAction: SolveMathAction, mathExpression-input, potentialAction.eduQuestionType, LearningResource.learningResourceType: Math Solver ou HowTo.assesses complementar. Referência oficial.",
+    "solution": "Preencher os tipos e valores exatos e declarar apenas os tipos de problema suportados pela ferramenta."
+  },
+  {
+    "code": "SPC-006",
+    "name": "SoftwareApplication sem propriedades mínimas",
+    "category": "Dados estruturados — imagens, aplicações e conteúdo especializado",
+    "details": "O objeto omite name, offers.price ou ambos aggregateRating e review. Aplicações gratuitas devem declarar preço 0; se o preço for superior a zero, priceCurrency é recomendado. Referência oficial.",
+    "solution": "Completar nome, oferta e pelo menos uma avaliação genuína; adicionar moeda quando aplicável."
+  },
+  {
+    "code": "SPC-007",
+    "name": "Subtipo ou categoria de aplicação inválidos",
+    "category": "Dados estruturados — imagens, aplicações e conteúdo especializado",
+    "details": "applicationCategory está fora da lista suportada ou o objeto usa apenas VideoGame, que não é por si só um tipo de aplicação elegível. Referência oficial.",
+    "solution": "Usar categoria suportada, adicionar operatingSystem e co-tipar VideoGame com MobileApplication, WebApplication ou outro subtipo aplicável."
+  },
+  {
+    "code": "SPC-008",
+    "name": "SpeakableSpecification com seletor inválido",
+    "category": "Dados estruturados — imagens, aplicações e conteúdo especializado",
+    "details": "O objeto não contém cssSelector nem xPath, usa ambos em simultâneo ou aponta para conteúdo inexistente/confuso. Referência oficial.",
+    "solution": "Usar exatamente um método e selecionar headlines ou resumos concisos presentes na página."
+  },
+  {
+    "code": "SPC-009",
+    "name": "Speakable fora do conteúdo ou mercado suportado",
+    "category": "Dados estruturados — imagens, aplicações e conteúdo especializado",
+    "details": "O conteúdo não é notícia em inglês para utilizadores nos EUA com Google Home em inglês, ou as secções excedem aproximadamente 20–30 segundos e incluem datelines, captions ou atribuições. Referência oficial.",
+    "solution": "Implementar apenas no público elegível e marcar dois ou três pontos-chave concisos por secção."
+  },
+  {
+    "code": "RCP-001",
+    "name": "Recipe sem nome ou imagem válida",
+    "category": "Dados estruturados — receitas e avaliações",
+    "details": "O objeto omite name ou image, ou a imagem está bloqueada, não é representativa ou usa formato não suportado. O Google recomenda imagens rastreáveis com pelo menos 50.000 píxeis nas proporções 16:9, 4:3 e 1:1. Referência oficial.",
+    "solution": "Fornecer o nome do prato e imagens finais, relevantes, indexáveis e em formatos suportados."
+  },
+  {
+    "code": "RCP-002",
+    "name": "Instruções ou tempos da receita malformados",
+    "category": "Dados estruturados — receitas e avaliações",
+    "details": "Os tempos não usam duração ISO 8601, totalTime não corresponde a prepTime + cookTime, recipeInstructions contém rótulos em vez da ação ou HowToSection agrupa receitas alternativas. Referência oficial.",
+    "solution": "Usar durações ISO 8601, texto estritamente instrucional e HowToSection apenas para agrupar passos da mesma receita; representar alternativas como objetos Recipe separados."
+  },
+  {
+    "code": "RCP-003",
+    "name": "Nutrição declarada sem rendimento",
+    "category": "Dados estruturados — receitas e avaliações",
+    "details": "nutrition apresenta valores por porção mas recipeYield está ausente. Referência oficial.",
+    "solution": "Adicionar recipeYield com o número de porções e manter os valores nutricionais coerentes com esse rendimento."
+  },
+  {
+    "code": "RCP-004",
+    "name": "ItemList de receitas incompleto",
+    "category": "Dados estruturados — receitas e avaliações",
+    "details": "itemListElement omite ListItem.position ou ListItem.url, ou contém URLs repetidas/não canónicas. Referência oficial.",
+    "solution": "Criar um ListItem por receita, com posição ordinal e URL canónica única."
+  },
+  {
+    "code": "RCP-005",
+    "name": "Review sem propriedades mínimas",
+    "category": "Dados estruturados — receitas e avaliações",
+    "details": "O objeto omite author, reviewRating.ratingValue, nome do item ou itemReviewed quando é standalone; author.name tem 100 ou mais caracteres ou não é um nome válido. A escala predefinida é 1–5. Referência oficial.",
+    "solution": "Aninhar a review no item ou definir itemReviewed suportado, usar autor real com menos de 100 caracteres e declarar bestRating/worstRating quando a escala não for 1–5."
+  },
+  {
+    "code": "RCP-006",
+    "name": "AggregateRating sem propriedades mínimas",
+    "category": "Dados estruturados — receitas e avaliações",
+    "details": "O objeto omite ratingValue, ambos ratingCount e reviewCount, o nome do item ou itemReviewed quando standalone. Referência oficial.",
+    "solution": "Fornecer média real, pelo menos uma contagem e entidade avaliada; num objeto aninhado, garantir que o parent contém name."
+  },
+  {
+    "code": "PAY-001",
+    "name": "Conteúdo pago não identificado",
+    "category": "Conteúdo pago e amostragem",
+    "details": "Uma página CreativeWork indexável contém paywall ou exige registo mas não declara isAccessibleForFree:false. São suportados CreativeWork, Article, NewsArticle, Blog, Comment, Course, HowTo, Message, Review e WebPage. Referência oficial.",
+    "solution": "Definir isAccessibleForFree:false no objeto principal e identificar as secções pagas."
+  },
+  {
+    "code": "PAY-002",
+    "name": "Secções pagas mal referenciadas",
+    "category": "Conteúdo pago e amostragem",
+    "details": "hasPart está aninhado, cssSelector não é uma classe .nome, a classe não existe no HTML, @type difere de WebPageElement ou hasPart.isAccessibleForFree não é false. Apenas JSON-LD e Microdata são aceites para este caso. Referência oficial.",
+    "solution": "Criar um WebPageElement não aninhado por secção, com seletor de classe exato e isAccessibleForFree:false."
+  },
+  {
+    "code": "WST-001",
+    "name": "Web Story AMP inválida",
+    "category": "Web Stories",
+    "details": "A Web Story falha no Web Stories Google Test Tool, URL Inspection ou AMP Linter e, por isso, não cumpre as especificações AMP obrigatórias. Referência oficial.",
+    "solution": "Corrigir todos os erros AMP e repetir os testes no URL publicado."
+  },
+  {
+    "code": "WST-002",
+    "name": "Metadados obrigatórios da Web Story ausentes",
+    "category": "Web Stories",
+    "details": "Falta pelo menos um dos campos obrigatórios: publisher-logo-src, poster-portrait-src, title ou publisher. Referência oficial.",
+    "solution": "Preencher os quatro campos em cada Story e verificar o preview na ferramenta de teste."
+  },
+  {
+    "code": "WST-003",
+    "name": "Web Story sem canonical autorreferente",
+    "category": "Web Stories",
+    "details": "Não existe rel=\"canonical\" ou aponta para outra URL. Cada Web Story deve ser canónica para si própria. Referência oficial.",
+    "solution": "Adicionar canonical absoluto para o próprio URL e configurar versões linguísticas quando existirem."
+  },
+  {
+    "code": "WST-004",
+    "name": "Web Story não descobrível ou não indexável",
+    "category": "Web Stories",
+    "details": "A URL não recebe links internos, não está no sitemap, é bloqueada por robots.txt ou contém noindex. Referência oficial.",
+    "solution": "Integrar a Story na arquitetura do site, incluí-la no sitemap e remover bloqueios incompatíveis com indexação."
+  },
+  {
+    "code": "WST-005",
+    "name": "Título, poster ou logo da Web Story fora das especificações",
+    "category": "Web Stories",
+    "details": "O título tem 90 ou mais caracteres, o poster mede menos de 640×853 px ou não usa proporção 3:4, ou o logo mede menos de 96×96 px ou não usa proporção 1:1. O Google recomenda título descritivo com menos de 70 caracteres. Referência oficial.",
+    "solution": "Manter o título abaixo de 90 caracteres, preferencialmente abaixo de 70, usar poster 3:4 com pelo menos 640×853 px e logo quadrado com pelo menos 96×96 px."
+  },
+  {
+    "code": "FEA-002",
+    "name": "Preferred Sources tratado como recurso de subdiretório",
+    "category": "Funcionalidades Google especializadas",
+    "details": "Uma publicação tenta usar a funcionalidade Preferred Sources para um subdiretório. Apenas sites ao nível de domínio e subdomínio são elegíveis; a seleção depende do utilizador e não existe marcação técnica para garanti-la. Referência oficial.",
+    "solution": "Usar o hostname elegível e, quando a publicação aparecer na ferramenta, fornecer o deeplink https://google.com/preferences/source?q=DOMINIO ou um botão para o utilizador escolher a fonte."
+  },
+  {
+    "code": "ECM-002",
+    "name": "Merchant listing sem propriedades obrigatórias",
+    "category": "E-commerce — produto e oferta",
+    "details": "Um Product diretamente comprável omite name, image ou offers, ou offers não é Offer. Merchant listings não suportam AggregateOffer. Referência oficial.",
+    "solution": "Adicionar nome, pelo menos uma imagem válida e um Offer completo a cada produto diretamente comprável."
+  },
+  {
+    "code": "ECM-004",
+    "name": "Várias moedas servidas pelo mesmo URL",
+    "category": "E-commerce — produto e oferta",
+    "details": "O preço e a moeda mudam por localização, sessão, cookie ou parâmetro não rastreável sem existir um URL distinto por moeda. Isto dificulta a associação estável entre URL, preço e moeda. Referência oficial.",
+    "solution": "Criar URLs rastreáveis e consistentes por moeda e alinhar em cada URL o conteúdo visível, dados estruturados e feed."
+  },
+  {
+    "code": "ECM-005",
+    "name": "Identificador comercial ausente ou inválido",
+    "category": "E-commerce — produto e oferta",
+    "details": "O produto omite o identificador aplicável ou contém GTIN em URL/não numérico, ISBN inadequado, MPN inconsistente ou SKU com espaços Unicode. Deve ser usado o GTIN mais específico entre gtin8, gtin12, gtin13 e gtin14; isbn aplica-se a Book, preferencialmente ISBN-13. Referência oficial.",
+    "solution": "Publicar identificadores reais atribuídos ao produto, usar o GTIN numérico correto, tipar livros como Book e Product e normalizar o SKU sem whitespace Unicode, preferencialmente ASCII."
+  },
+  {
+    "code": "ECM-006",
+    "name": "Categoria de produto malformada",
+    "category": "E-commerce — produto e oferta",
+    "details": "category excede 750 caracteres, ou CategoryCode para Google Product Category omite inCodeSet/codeValue. Caminhos de categoria usam como separador e cada segmento deve conter pelo menos uma letra. Referência oficial.",
+    "solution": "Reduzir categorias personalizadas e representar a taxonomia Google com CategoryCode, inCodeSet apontado à taxonomia oficial e ID ou caminho válido em codeValue."
+  },
+  {
+    "code": "ECM-008",
+    "name": "Condição ou disponibilidade usa valor não suportado",
+    "category": "E-commerce — produto e oferta",
+    "details": "availability ou itemCondition usa texto livre ou enumeração não suportada. availability suporta BackOrder, Discontinued, InStock, InStoreOnly, LimitedAvailability, OnlineOnly, OutOfStock, PreOrder, PreSale e SoldOut; itemCondition suporta NewCondition, RefurbishedCondition e UsedCondition. Referência oficial.",
+    "solution": "Usar URLs completas das enumerações Schema.org suportadas e sincronizar o valor com o estado visível, feed e checkout."
+  },
+  {
+    "code": "ECM-009",
+    "name": "Preço promocional ou riscado mal modelado",
+    "category": "E-commerce — produto e oferta",
+    "details": "O preço anterior não usa UnitPriceSpecification com priceType: https://schema.org/StrikethroughPrice, o preço promocional é marcado como riscado ou falta o preço atual em Offer. Referência oficial.",
+    "solution": "Separar o preço atual do anterior. Manter o preço ativo em Offer.price ou especificação ativa sem priceType e usar validFrom/validThrough ISO 8601 quando a promoção tem período definido."
+  },
+  {
+    "code": "ECM-010",
+    "name": "Preço unitário incompleto",
+    "category": "E-commerce — produto e oferta",
+    "details": "Existe referenceQuantity sem QuantitativeValue.value ou unitCode. A quantidade-base pode ser indicada por valueReference. Referência oficial.",
+    "solution": "Completar quantidade e unidade UN/CEFACT ou nome de unidade aceite e garantir correspondência com o preço unitário visível."
+  },
+  {
+    "code": "ECM-011",
+    "name": "Preço de membro conflitante ou incompleto",
+    "category": "E-commerce — produto e oferta",
+    "details": "Existe preço exclusivo de membro sem preço regular, sem validForMemberTier, ou com priceType e validForMemberTier na mesma UnitPriceSpecification. Nesse último caso, o Google ignora a especificação. Referência oficial.",
+    "solution": "Publicar separadamente o preço normal e o preço do nível de fidelização, referenciando o MemberProgramTier correto."
+  },
+  {
+    "code": "ECM-012",
+    "name": "Pontos ganhos com formato inválido",
+    "category": "E-commerce — produto e oferta",
+    "details": "membershipPointsEarned contém valor decimal ou não numérico, ou não está associado a validForMemberTier. O valor tem de ser inteiro e só é interpretado em conjunto com o nível aplicável. Referência oficial.",
+    "solution": "Usar um inteiro não negativo e associar a especificação ao MemberProgramTier correspondente."
+  },
+  {
+    "code": "ECM-013",
+    "name": "Tamanho ou audiência não normalizados",
+    "category": "E-commerce — produto e oferta",
+    "details": "sizeGroup, sizeSystem, género ou idade usa texto livre. sizeGroup aceita no máximo dois valores entre Regular, Petite, Plus, Tall, Big e Maternity; sizeSystem suporta AU, BR, CN, DE, Europe, FR, IT, JP, MX, UK e US. Referência oficial.",
+    "solution": "Normalizar tamanho, sistema e audiência através de SizeSpecification e PeopleAudience com os valores suportados."
+  },
+  {
+    "code": "ECM-014",
+    "name": "Certificação de produto incompleta ou não suportada",
+    "category": "E-commerce — produto e oferta",
+    "details": "hasCertification usa emissor ou tipo não suportado, ou omite identificação, classificação e escala aplicáveis. Podem ser apresentadas até dez certificações; certificações energéticas europeias exigem identificação EPREL ou rating válido e limites quando aplicáveis. Referência oficial.",
+    "solution": "Usar emissores e certificações suportados e preencher identificação, classificação, bestRating e worstRating exigidos pelo caso."
+  },
+  {
+    "code": "ECM-015",
+    "name": "Modelo 3D de produto incompatível",
+    "category": "E-commerce — produto e oferta",
+    "details": "Existem vários subjectOf, falta 3DModel.encoding.contentUrl ou o ficheiro não é .gltf/.glb. É suportado no máximo um 3DModel por produto. Referência oficial.",
+    "solution": "Manter um único modelo e publicar um ficheiro glTF rastreável através de encoding.contentUrl."
+  },
+  {
+    "code": "ECM-016",
+    "name": "AggregateOffer utilizado para variantes",
+    "category": "E-commerce — produto e oferta",
+    "details": "AggregateOffer agrega tamanhos, cores ou outras variantes. Este tipo representa o mesmo produto vendido por vários comerciantes e exige lowPrice e priceCurrency; highPrice e offerCount são recomendados. Referência oficial.",
+    "solution": "Modelar variantes com ProductGroup e objetos Product individuais. Reservar AggregateOffer às ofertas do mesmo produto por vários vendedores."
+  },
+  {
+    "code": "VAR-001",
+    "name": "Variante sem identificador único",
+    "category": "Variantes de produto",
+    "details": "Duas ou mais variantes não têm sku/GTIN exclusivo ou partilham o mesmo identificador. Cada variante deve possuir identidade própria e cumprir os requisitos normais de Product. Referência oficial.",
+    "solution": "Atribuir SKU ou GTIN exclusivo, real e válido a cada variante."
+  },
+  {
+    "code": "VAR-002",
+    "name": "Identificador do grupo ausente ou divergente",
+    "category": "Variantes de produto",
+    "details": "Falta ProductGroup.productGroupID e Product.inProductGroupWithID, ou ambos existem com valores diferentes. Referência oficial.",
+    "solution": "Definir um ID estável de grupo e reutilizá-lo de forma idêntica no ProductGroup e em todas as variantes."
+  },
+  {
+    "code": "VAR-003",
+    "name": "Variante sem URL diretamente selecionável",
+    "category": "Variantes de produto",
+    "details": "Não existe URL rastreável que abra diretamente a variante correta ou o carregamento não atualiza imagem, preço, stock e seleção de compra. Parâmetros de query são aceites quando rastreáveis. Referência oficial.",
+    "solution": "Criar um URL estável por variante e garantir que a resposta apresenta imediatamente os dados e a seleção dessa variante."
+  },
+  {
+    "code": "VAR-004",
+    "name": "Canonical incorreta em variantes de página única",
+    "category": "Variantes de produto",
+    "details": "Uma implementação de página única canonicaliza para uma variante pré-selecionada ou define ProductGroup.url com seletores. O URL-base canonical deve ser neutro. Referência oficial.",
+    "solution": "Canonicalizar para o URL-base sem variante e usar os URLs de variantes apenas para pré-seleção rastreável."
+  },
+  {
+    "code": "VAR-005",
+    "name": "Página de variante sem markup autónomo",
+    "category": "Variantes de produto",
+    "details": "Numa implementação multipágina, cada página contém dados parciais ou depende de outra URL para definir o grupo. Cada página deve conter markup completo e autónomo. Referência oficial.",
+    "solution": "Incluir em cada página ProductGroup, propriedades comuns e todos os campos obrigatórios da variante carregada; variantes remotas podem ser ligadas por url."
+  },
+  {
+    "code": "VAR-006",
+    "name": "variesBy usa propriedade não suportada",
+    "category": "Variantes de produto",
+    "details": "variesBy contém texto livre, URL parcial ou propriedade fora de color, size, suggestedAge, suggestedGender, material e pattern. Referência oficial.",
+    "solution": "Declarar apenas dimensões suportadas através das URLs Schema.org completas e colocar o valor específico em cada Product."
+  },
+  {
+    "code": "LOY-001",
+    "name": "Programa de fidelização incompleto",
+    "category": "Programa de fidelização",
+    "details": "Organization.hasMemberProgram omite name, description ou pelo menos um MemberProgramTier. O URL de adesão é opcional e limitado a um. Referência oficial.",
+    "solution": "Publicar o programa numa página institucional ou de políticas e completar todos os níveis disponíveis."
+  },
+  {
+    "code": "LOY-002",
+    "name": "Nível de fidelização sem benefício válido",
+    "category": "Programa de fidelização",
+    "details": "MemberProgramTier não contém name ou hasTierBenefit, ou declara LoyaltyPoints sem membershipPointsEarned. Cada nível precisa de pelo menos um benefício entre LoyaltyPoints e LoyaltyPrice. Referência oficial.",
+    "solution": "Definir benefícios verificáveis por nível e preencher requisitos, taxas, URL e pontos quando aplicáveis."
+  },
+  {
+    "code": "LOY-003",
+    "name": "Benefício comercial não ligado ao nível",
+    "category": "Programa de fidelização",
+    "details": "Preço, pontos ou transporte de membro não referencia o MemberProgramTier através de validForMemberTier. Referência oficial.",
+    "solution": "Atribuir @id estável a cada nível e referenciá-lo nas especificações de preço, pontos e transporte."
+  },
+  {
+    "code": "SHP-001",
+    "name": "Política global de transporte sem condições",
+    "category": "Política de transporte estruturada",
+    "details": "Organization.hasShippingService existe sem shippingConditions. Cada ShippingService precisa de condições; quando várias correspondem, o Google escolhe o menor custo e, em empate, o menor prazo. Referência oficial.",
+    "solution": "Adicionar uma ou mais ShippingConditions completas e atribuir nome único a cada serviço."
+  },
+  {
+    "code": "SHP-002",
+    "name": "Transporte aplicado mundialmente por omissão",
+    "category": "Política de transporte estruturada",
+    "details": "ShippingConditions omite shippingDestination apesar de o serviço não estar disponível em todo o mundo. Sem destino, as condições são interpretadas como globais. Referência oficial.",
+    "solution": "Definir explicitamente países e regiões para todos os serviços com cobertura limitada."
+  },
+  {
+    "code": "SHP-003",
+    "name": "Região de transporte malformada",
+    "category": "Política de transporte estruturada",
+    "details": "O país não usa ISO 3166-1 alpha-2, a região não usa código válido, códigos postais são usados fora de AU/CA/US ou região e código postal aparecem no mesmo DefinedRegion. addressRegion suporta códigos ISO 3166-2 de dois ou três caracteres apenas para EUA, Austrália e Japão. Referência oficial.",
+    "solution": "Normalizar destinos e usar objetos DefinedRegion separados para regras regionais e postais."
+  },
+  {
+    "code": "SHP-004",
+    "name": "Prazo de processamento ou trânsito inválido",
+    "category": "Política de transporte estruturada",
+    "details": "Durações possuem decimais/valores negativos, faltam limites, a unidade não é DAY/d ou cutoffTime omite timezone. Intervalos usam minValue e maxValue; valores exatos usam value. Pedidos após o cutoff acrescentam um dia de processamento. Referência oficial.",
+    "solution": "Normalizar dias úteis, cutoff, processamento e trânsito em ServicePeriod e QuantitativeValue, com inteiros não negativos e offset correto."
+  },
+  {
+    "code": "SHP-005",
+    "name": "Custo de transporte inválido",
+    "category": "Política de transporte estruturada",
+    "details": "Falta moeda ISO 4217, o valor inclui símbolo monetário, value e maxValue são usados em simultâneo ou transporte gratuito não usa zero. Percentagens de encomenda/peso são frações entre 0 e 1. Referência oficial.",
+    "solution": "Corrigir MonetaryAmount/ShippingRateSettings, usar apenas um tipo de valor e alinhar a moeda com a oferta."
+  },
+  {
+    "code": "SHP-006",
+    "name": "Exclusão de transporte contém preço ou prazo",
+    "category": "Política de transporte estruturada",
+    "details": "doesNotShip:true aparece juntamente com shippingRate ou transitTime, embora uma exclusão não deva definir custo nem prazo. Referência oficial.",
+    "solution": "Remover custo e trânsito da exclusão e criar condições separadas para destinos servidos."
+  },
+  {
+    "code": "SHP-007",
+    "name": "Benefício de transporte sem opção regular",
+    "category": "Política de transporte estruturada",
+    "details": "Existe um serviço limitado por validForMemberTier, mas não existe serviço equivalente para clientes não membros. Referência oficial.",
+    "solution": "Publicar separadamente o serviço regular e o benefício do nível de fidelização."
+  },
+  {
+    "code": "SHP-008",
+    "name": "Múltiplas opções de transporte combinadas num só objeto",
+    "category": "Política de transporte estruturada",
+    "details": "Um único OfferShippingDetails combina vários prazos ou preços. Cada objeto suporta apenas um deliveryTime e um shippingRate; modalidades, prazos ou preços diferentes exigem objetos separados. Referência oficial.",
+    "solution": "Criar um OfferShippingDetails completo por combinação real de destino, modalidade, prazo e preço."
+  },
+  {
+    "code": "RET-001",
+    "name": "Política por link ou países fora da configuração suportada",
+    "category": "Política de devolução estruturada",
+    "details": "MerchantReturnPolicy usa merchantReturnLink juntamente com uma configuração parcial incompatível, ou declara mais de 50 países ou códigos fora de ISO 3166-1 alpha-2. A configuração mínima geral de categoria e janela já é tratada no controlo Merchant correspondente. Referência oficial.",
+    "solution": "Usar uma das configurações suportadas de forma coerente: política por merchantReturnLink, ou política estruturada por países e categoria, com no máximo 50 códigos alpha-2."
+  },
+  {
+    "code": "RET-002",
+    "name": "Taxa de devolução incompatível com a categoria",
+    "category": "Política de devolução estruturada",
+    "details": "FreeReturn ou ReturnFeesCustomerResponsibility contém montante, ou ReturnShippingFees não contém returnShippingFeesAmount não nulo. Apenas ReturnShippingFees aceita e exige esse valor. Referência oficial.",
+    "solution": "Remover ou adicionar o custo conforme a categoria e usar moeda ISO 4217."
+  },
+  {
+    "code": "RET-003",
+    "name": "Método, condição ou reembolso usa texto livre",
+    "category": "Política de devolução estruturada",
+    "details": "A política não usa as enumerações suportadas para devolução por correio/loja/quiosque, estado novo/usado/recondicionado/danificado, troca/reembolso/crédito em loja ou origem da etiqueta. Referência oficial.",
+    "solution": "Substituir texto livre pelas enumerações Schema.org suportadas e declarar regras distintas para defeito e arrependimento quando aplicável."
+  },
+  {
+    "code": "RET-004",
+    "name": "Exceção sazonal incompleta",
+    "category": "Política de devolução estruturada",
+    "details": "returnPolicySeasonalOverride omite returnPolicyCategory, uma janela finita omite merchantReturnDays ou startDate/endDate não usam Date/DateTime ISO 8601. Referência oficial.",
+    "solution": "Completar categoria, janela e datas da exceção."
+  },
+  {
+    "code": "RET-005",
+    "name": "Política aplicada no nível errado",
+    "category": "Política de devolução estruturada",
+    "details": "Uma exceção de produto substitui indevidamente a política global em Organization, ou a regra geral é repetida em todas as ofertas. A política da oferta prevalece sobre a organizacional. Referência oficial.",
+    "solution": "Centralizar a regra geral em Organization.hasMerchantReturnPolicy e manter em Offer apenas diferenças reais."
+  },
+  {
+    "code": "VAC-001",
+    "name": "VacationRental sem propriedades mínimas",
+    "category": "Alojamentos de férias",
+    "details": "Falta containsPlace: Accommodation, occupancy: QuantitativeValue com value inteiro, identifier estável, name, latitude/longitude com pelo menos cinco casas decimais ou image com no mínimo oito fotografias. Deve existir pelo menos uma imagem de quarto, casa de banho e área comum. Referência oficial.",
+    "solution": "Completar todos os campos e manter o mesmo identifier entre idiomas e alterações do anúncio."
+  },
+  {
+    "code": "VAC-002",
+    "name": "Localização ou características malformadas",
+    "category": "Alojamentos de férias",
+    "details": "O endereço omite país ISO 3166-1 alpha-2 ou morada física; floorSize usa unidade fora de FTK, SQFT, MTK e SQM; amenityFeature traduz nomes/valores que devem seguir a enumeração oficial em inglês. Referência oficial.",
+    "solution": "Fornecer endereço completo, unidade suportada e nomes/valores de amenities conforme a documentação."
+  },
+  {
+    "code": "VAC-003",
+    "name": "Review de alojamento sem data",
+    "category": "Alojamentos de férias",
+    "details": "Uma Review associada ao alojamento omite datePublished, além de algum requisito geral de Review. Referência oficial.",
+    "solution": "Adicionar data ISO 8601 e manter a avaliação genuína, alojada e visível."
+  },
+  {
+    "code": "VDO-001",
+    "name": "VideoObject sem propriedades mínimas",
+    "category": "`VideoObject`",
+    "details": "O objeto omite name único, thumbnailUrl válido ou uploadDate ISO 8601. O timezone é recomendado quando a hora é declarada. Referência oficial.",
+    "solution": "Preencher os três campos, sincronizá-los com a watch page e usar offset correto no timestamp."
+  },
+  {
+    "code": "VDO-002",
+    "name": "Acesso ou descrição de VideoObject insuficientes",
+    "category": "`VideoObject`",
+    "details": "Faltam contentUrl e embedUrl, os URLs apontam à watch page em vez de bytes/player, description é duplicada ou duration não usa ISO 8601. Referência oficial.",
+    "solution": "Preferir contentUrl para os bytes, usar embedUrl para o player, criar descrição única e declarar duração ISO 8601."
+  }
+];
