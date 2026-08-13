@@ -26,7 +26,7 @@ const internalResponses = context => unique([
   ...context.pageResponses.values(),
   ...context.targets.values()
 ]).filter(response => sameOrigin(response.requestedUrl, context.origin));
-const asset = (context, kind) => context.resources.filter(item => item.kind === kind);
+const asset = (context, kind) => context.resources.filter(item => item.kind === kind || item.kinds?.includes(kind));
 const externalResponses = context => [...context.targets.values()].filter(response => !sameOrigin(response.requestedUrl, context.origin));
 const redirected = response => response.redirects.length > 0;
 const broken = response => response.error || response.status >= 400;
@@ -227,7 +227,7 @@ add(['IDN-004'], context => {
 });
 
 add(['DAT-002'], context => {
-  const pages = htmlPages(context).filter(page => nodesOf(page, 'Article').length || page.dates.length);
+  const pages = htmlPages(context).filter(page => ['Article', 'NewsArticle', 'BlogPosting'].some(type => nodesOf(page, type).length) || page.dates.length);
   return issueFree(pages, page => {
     const article = nodesOf(page, 'Article')[0] ?? nodesOf(page, 'NewsArticle')[0] ?? nodesOf(page, 'BlogPosting')[0];
     return !article?.datePublished || (page.dates.length && !page.dates.includes(article.datePublished));
@@ -289,7 +289,10 @@ add(['EDS-009'], context => typeCheck(context, 'ItemList', node => {
   return items.length >= 2 && items.every((item, index) => Number(item?.position) === index + 1 && validUrl(item?.url ?? item?.item?.url));
 }));
 
-add(['EDU-001'], context => typeCheck(context, 'Course', (_node, page) => nodesOf(page, 'Course').length >= 3 && nodesOf(page, 'ItemList').length > 0));
+add(['EDU-001'], context => {
+  const pages = htmlPages(context).filter(page => nodesOf(page, 'ItemList').some(list => values(list.itemListElement).some(item => types(item.item ?? item).includes('Course'))));
+  return issueFree(pages, page => nodesOf(page, 'Course').length < 3, pages.length > 0);
+});
 add(['EDU-002'], context => typeCheck(context, 'Course', node => present(node.name) && present(node.description) && String(node.description).length <= 60 && present(node.provider?.name ?? node.provider)));
 add(['EDU-003'], context => typeCheck(context, 'Dataset', node => present(node.name) && typeof node.description === 'string' && node.description.length >= 50 && node.description.length <= 5_000));
 add(['EDU-004'], context => typeCheck(context, 'DataDownload', node => validUrl(node.contentUrl)));
@@ -307,7 +310,7 @@ add(['EDU-011'], context => typeCheck(context, 'QAPage', node => {
 }));
 
 add(['SPC-001'], context => typeCheck(context, 'ImageObject', node => validUrl(node.contentUrl ?? node.url) && [node.creator, node.creditText, node.copyrightNotice, node.license].some(present)));
-add(['SPC-002'], context => typeCheck(context, 'ImageObject', node => !node.acquireLicensePage || validUrl(node.license)));
+add(['SPC-002'], context => typeCheck(context, 'ImageObject', node => validUrl(node.license) && (!node.acquireLicensePage || validUrl(node.acquireLicensePage))));
 add(['SPC-003'], context => typeCheck(context, 'Movie', node => present(node.name) && values(node.image).some(image => validUrl(typeof image === 'string' ? image : image?.contentUrl ?? image?.url))));
 add(['SPC-005'], context => typeCheck(context, 'MathSolver', node => {
   const action = values(node.potentialAction).find(item => types(item).includes('SolveMathAction'));
@@ -348,7 +351,10 @@ add(['RCP-004'], context => typeCheck(context, 'ItemList', node => {
   const recipeItems = values(node.itemListElement).filter(item => types(item.item ?? item).includes('Recipe'));
   return recipeItems.length === 0 || recipeItems.every((item, index) => Number(item.position) === index + 1 && validUrl(item.url ?? item.item?.url));
 }));
-add(['RCP-005'], context => typeCheck(context, 'Review', node => present(node.author?.name ?? node.author) && String(node.author?.name ?? node.author).length < 100 && numeric(node.reviewRating?.ratingValue) && present(node.itemReviewed ?? node.__nestedItemName)));
+add(['RCP-005'], context => typeCheck(context, 'Review', (node, page) => {
+  const nested = page.structuredNodes.some(parent => values(parent.review).includes(node) && present(parent.name));
+  return present(node.author?.name ?? node.author) && String(node.author?.name ?? node.author).length < 100 && numeric(node.reviewRating?.ratingValue) && (present(node.itemReviewed) || nested);
+}));
 add(['RCP-006'], context => typeCheck(context, 'AggregateRating', node => numeric(node.ratingValue) && (numeric(node.ratingCount) || numeric(node.reviewCount))));
 
 add(['PAY-001'], context => {
@@ -438,7 +444,7 @@ add(['ECM-012'], context => typeCheck(context, 'LoyaltyPoints', node => numeric(
 add(['ECM-013'], context => typeCheck(context, 'Product', node => (!node.size || typeof node.size === 'string') && (!node.suggestedAge || present(node.suggestedAge?.minValue ?? node.suggestedAge?.maxValue)) && (!node.suggestedGender || ['Male', 'Female', 'Unisex'].includes(node.suggestedGender))));
 add(['ECM-014'], context => typeCheck(context, 'Certification', node => present(node.name) && present(node.certificationIdentification ?? node.identifier) && present(node.issuedBy)));
 add(['ECM-015'], context => typeCheck(context, '3DModel', node => validUrl(node.encoding?.contentUrl ?? node.contentUrl) && /model\/(?:gltf\+json|gltf-binary)|application\/octet-stream/i.test(node.encoding?.encodingFormat ?? node.encodingFormat ?? '')));
-add(['ECM-016'], context => typeCheck(context, 'ProductGroup', node => !values(node.hasVariant).some(variant => types(variant.offers).includes('AggregateOffer'))));
+add(['ECM-016'], context => typeCheck(context, 'ProductGroup', node => !values(node.hasVariant).some(variant => values(variant.offers).some(offer => types(offer).includes('AggregateOffer')))));
 
 add(['PRD-001'], context => typeCheck(context, 'Product', node => present(node.name) && present(node.image) && present(node.offers ?? node.review ?? node.aggregateRating)));
 add(['PRD-002'], context => typeCheck(context, 'Product', node => present(node.aggregateRating)));

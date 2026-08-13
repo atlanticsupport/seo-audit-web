@@ -4,7 +4,7 @@ import { parsePage } from './html.js';
 const MAX_PAGES = 8;
 const MAX_SITEMAPS = 3;
 const MAX_TARGETS = 10;
-const MAX_ASSETS = 10;
+const MAX_ASSETS = 12;
 
 export async function collectSite(value) {
   const start = publicUrl(value);
@@ -50,23 +50,23 @@ export async function collectSite(value) {
     }
   }
 
-  const allLinks = unique(pages.flatMap(page => page.links.map(link => link.url)));
+  const allLinks = unique(pages.flatMap(page => [...page.links.map(link => link.url), ...page.canonical, ...page.hreflang.map(item => item.url)]));
   const uncheckedInternal = allLinks.filter(url => sameOrigin(url, origin) && !pageResponses.has(normalize(url))).slice(0, MAX_TARGETS);
   const external = allLinks.filter(url => !sameOrigin(url, origin)).slice(0, 5);
   const targetResponses = await Promise.all([...uncheckedInternal, ...external].map(url => safeFetch(url, { maxBytes: 50_000 })));
   const targets = new Map(targetResponses.map(response => [normalize(response.requestedUrl), response]));
 
-  const assets = unique(pages.flatMap(page => [
+  const assets = mergeAssets(pages.flatMap(page => [
+    ...page.icons.map(url => ({ url, kind: 'icon' })),
+    ...structuredUrls(page).map(url => ({ url, kind: 'structured' })),
+    ...page.videos.flatMap(video => [video.src, video.poster, ...video.sources.map(source => source.src)].filter(Boolean).map(url => ({ url: new URL(url, page.url).href, kind: 'video' }))),
     ...page.css.map(url => ({ url, kind: 'css' })),
     ...page.js.map(url => ({ url, kind: 'js' })),
-    ...page.icons.map(url => ({ url, kind: 'icon' })),
-    ...page.imageUrls.map(url => ({ url, kind: 'image' })),
-    ...structuredUrls(page).map(url => ({ url, kind: 'structured' })),
-    ...page.videos.flatMap(video => [video.src, video.poster, ...video.sources.map(source => source.src)].filter(Boolean).map(url => ({ url: new URL(url, page.url).href, kind: 'video' })))
-  ]), item => item.url).slice(0, MAX_ASSETS);
+    ...page.imageUrls.map(url => ({ url, kind: 'image' }))
+  ])).slice(0, MAX_ASSETS);
   const assetResponses = await Promise.all(assets.map(asset => safeFetch(asset.url, {
-    maxBytes: asset.kind === 'css' || asset.kind === 'js' ? 500_000 : 70_000,
-    headers: asset.kind === 'image' || asset.kind === 'video' ? { range: 'bytes=0-65535' } : undefined,
+    maxBytes: asset.kinds.some(kind => kind === 'css' || kind === 'js') ? 500_000 : 70_000,
+    headers: asset.kinds.every(kind => ['image', 'icon', 'video'].includes(kind)) ? { range: 'bytes=0-65535' } : undefined,
     accept: '*/*'
   })));
   const resources = assets.map((asset, index) => ({ ...asset, response: assetResponses[index] }));
@@ -206,6 +206,16 @@ function structuredUrls(page) {
     .filter(Boolean).map(value => {
       try { return new URL(value, page.url).href; } catch { return ''; }
     }).filter(Boolean);
+}
+
+function mergeAssets(items) {
+  const assets = new Map();
+  for (const item of items) {
+    const current = assets.get(item.url) ?? { url: item.url, kinds: [] };
+    if (!current.kinds.includes(item.kind)) current.kinds.push(item.kind);
+    assets.set(item.url, current);
+  }
+  return [...assets.values()];
 }
 
 async function safeFetch(value, options) {

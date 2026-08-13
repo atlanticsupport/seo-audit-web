@@ -70,7 +70,8 @@ function render(data) {
     [`${data.summary.passed}`, ' certos'],
     [`${data.summary.failed}`, ' com problema'],
     [`${data.summary.checked}`, ' verificados'],
-    [`${data.pagesScanned}`, ' páginas lidas']
+    [`${data.pagesScanned}`, ' páginas lidas'],
+    [`${data.supportedDetectors}`, ' detetores disponíveis']
   ];
   for (const [value, label] of parts) {
     const item = document.createElement('span');
