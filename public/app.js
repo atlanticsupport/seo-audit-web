@@ -475,7 +475,7 @@ function showSummary(pages, total, failures, limited) {
   const problems = failures.size - optional;
   const score = Math.round((total - problems - optional * .25) / total * 100);
   const donut = document.querySelector('#health-donut');
-  donut.style.setProperty('--value', score);
+  document.querySelector('#health-ring').setAttribute('stroke-dasharray', `${score} 100`);
   donut.querySelector('span').textContent = score;
   document.querySelector('#health-copy').textContent = `${pages} páginas · ${problems} problemas · ${optional} opcionais${limited ? ' · limite atingido' : ''}`;
   document.querySelector('#checks-status').textContent = problems ? `${problems} problemas` : optional ? `${optional} opcionais` : 'Tudo certo';
@@ -539,7 +539,7 @@ function resetRanking() {
   document.querySelector('#trend-chart polyline').setAttribute('points', '');
   for (const id of ['clicks', 'impressions', 'ctr', 'position']) document.querySelector(`#kpi-${id}`).textContent = '—';
   document.querySelector('#gsc-period').textContent = sessionStorage.getItem('gsc-session') ? 'A carregar' : 'Não ligado';
-  document.querySelector('#health-donut').style.setProperty('--value', 0);
+  document.querySelector('#health-ring').setAttribute('stroke-dasharray', '0 100');
   document.querySelector('#health-donut span').textContent = '—';
   document.querySelector('#health-copy').textContent = 'A analisar';
 }
@@ -791,8 +791,11 @@ function setBars(container, values) {
   for (const [label, value] of values) {
     const row = document.createElement('div'); row.className = 'bar';
     const name = document.createElement('span'); name.textContent = label;
-    const track = document.createElement('span'); track.className = 'track';
-    const fill = document.createElement('i'); fill.style.width = `${value / max * 100}%`; track.append(fill);
+    const track = document.createElement('progress');
+    track.className = 'track';
+    track.max = max;
+    track.value = value;
+    track.setAttribute('aria-label', label);
     const count = document.createElement('strong'); count.textContent = Number.isInteger(value) ? value : decimal(value);
     row.append(name, track, count); container.append(row);
   }

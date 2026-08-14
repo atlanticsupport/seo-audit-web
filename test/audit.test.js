@@ -20,6 +20,15 @@ test('a interface recebe apenas as 273 regras com detetor', async () => {
   assert.deepEqual(rules.map(rule => rule.code).sort(), supportedCodes());
 });
 
+test('a interface respeita a CSP sem estilos inline', async () => {
+  const [html, app] = await Promise.all([
+    readFile(new URL('../public/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/app.js', import.meta.url), 'utf8')
+  ]);
+  assert.doesNotMatch(html, /\sstyle=/i);
+  assert.doesNotMatch(app, /\.style\.|setAttribute\(['"]style/);
+});
+
 test('endereços privados e protocolos impróprios são recusados', () => {
   assert.throws(() => publicUrl('http://127.0.0.1'));
   assert.throws(() => publicUrl('http://10.0.0.1'));
