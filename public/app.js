@@ -36,12 +36,13 @@ if (oauth) {
   sessionStorage.setItem('gsc-session', oauth);
   history.replaceState(null, '', `${location.pathname}${location.search}`);
 }
-if (sessionStorage.getItem('gsc-session')) {
-  gscConnect.classList.add('connected');
-  gscConnect.title = 'Google Search Console ligado';
-  gscConnect.setAttribute('aria-label', 'Google Search Console ligado');
-}
+setGscConnected(Boolean(sessionStorage.getItem('gsc-session')));
 gscConnect.addEventListener('click', () => {
+  if (sessionStorage.getItem('gsc-session')) {
+    if (!window.confirm('Confirmar a desassociação do Google Search Console?')) return;
+    disconnectGsc();
+    return;
+  }
   location.href = `${GSC_ORIGIN}/oauth/start?return_to=${encodeURIComponent(`${location.origin}${location.pathname}`)}`;
 });
 rulesPromise.then(rules => { if (!run) renderLoading(rules, false); });
@@ -590,14 +591,26 @@ async function loadGsc(site) {
   const property = `sc-domain:${new URL(site).hostname.replace(/^www\./, '')}`;
   const response = await fetch(`${GSC_ORIGIN}/gsc/ranking?days=28&site=${encodeURIComponent(property)}`, { headers: { authorization: `Bearer ${session}` } });
   const data = await response.json();
-  if (response.status === 401) {
-    sessionStorage.removeItem('gsc-session');
-    gscConnect.classList.remove('connected');
-    gscConnect.title = 'Ligar Google Search Console';
-    gscConnect.setAttribute('aria-label', 'Ligar Google Search Console');
-  }
+  if (response.status === 401) disconnectGsc();
   if (!response.ok) throw new Error(data.error || 'Não foi possível ler o Search Console.');
+  if (session !== sessionStorage.getItem('gsc-session')) throw new Error('GSC não ligado');
   return data;
+}
+
+function setGscConnected(connected) {
+  gscConnect.classList.toggle('connected', connected);
+  const label = connected ? 'Google Search Console ligado' : 'Ligar Google Search Console';
+  gscConnect.title = label;
+  gscConnect.setAttribute('aria-label', label);
+}
+
+function disconnectGsc() {
+  sessionStorage.removeItem('gsc-session');
+  setGscConnected(false);
+  document.querySelector('#gsc-period').textContent = 'Não ligado';
+  for (const id of ['clicks', 'impressions', 'ctr', 'position']) document.querySelector(`#kpi-${id}`).textContent = '—';
+  document.querySelector('#trend-chart polyline').setAttribute('points', '');
+  auditState.gsc = null;
 }
 
 function keywordCandidates(site, pagesMap, gsc) {
