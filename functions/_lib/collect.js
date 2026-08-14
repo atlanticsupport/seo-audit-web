@@ -1,7 +1,7 @@
 import { fetchLimited, publicUrl } from './net.js';
 import { parsePage } from './html.js';
 
-const PAGE_BATCH = 5;
+const PAGE_BATCH = 1;
 const SITEMAP_BATCH = 3;
 const FETCH_BATCH = 20;
 
@@ -9,7 +9,7 @@ export async function bootstrapSite(value) {
   const start = publicUrl(value);
   const robotsUrl = new URL('/robots.txt', start).href;
   const [first, robotsResponse, ...botResponses] = await Promise.all([
-    fetchLimited(start, { maxBytes: 2_100_000 }),
+    fetchLimited(start, { maxBytes: 100_000 }),
     fetchLimited(robotsUrl, { maxBytes: 600_000, accept: 'text/plain,*/*;q=0.5', forceText: true }),
     ...Object.values(BOT_AGENTS).map(userAgent => fetchLimited(start, { userAgent, maxBytes: 100_000 }))
   ]);

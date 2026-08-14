@@ -1,6 +1,5 @@
-import { bootstrapSite, collectFetchBatch, collectPageBatch, collectSitemapBatch, emptyContext } from '../_lib/collect.js';
+import { bootstrapSite, collectFetchBatch, collectPageBatch, collectSitemapBatch } from '../_lib/collect.js';
 import { evaluate, supportedCodes } from '../_lib/evaluate.js';
-import { parsePage } from '../_lib/html.js';
 
 export async function onRequest({ request }) {
   if (request.method !== 'POST') return json({ error: 'Método não permitido.' }, 405, { allow: 'POST' });
@@ -23,15 +22,17 @@ export async function onRequest({ request }) {
 async function bootstrap(url) {
   if (typeof url !== 'string' || url.length > 2_000) throw new Error('Indica um URL válido.');
   const data = await bootstrapSite(url);
-  const page = data.first.text ? parsePage(data.first) : null;
-  const pageResponses = new Map([[data.first.requestedUrl, data.first], [data.first.finalUrl, data.first]]);
-  const context = emptyContext(data.origin, page ? [page] : [], pageResponses);
-  context.robots = data.robots;
-  context.bots = data.bots;
-  const failures = evaluate(context).filter(result => BOOTSTRAP_CODES.has(result.code) && !result.ok).map(result => ({
-    code: result.code,
-    urls: result.code.startsWith('OTH-00') || result.code === 'AIX-002' ? [new URL('/robots.txt', data.origin).href] : [data.finalUrl]
-  }));
+  const robotsUrl = new URL('/robots.txt', data.origin).href;
+  const failures = [
+    ['OTH-006', data.robots.response.status === 200 && data.robots.errors.length > 0, robotsUrl],
+    ['OTH-007', data.robots.response.error === 'redirect_limit' || redirectLoop(data.robots.response.redirects), robotsUrl],
+    ['OTH-008', data.robots.response.status !== 200, robotsUrl],
+    ['OTH-017', data.robots.disallows('*', data.finalUrl), data.finalUrl],
+    ['AIX-002', data.robots.disallows('googlebot', data.finalUrl), robotsUrl],
+    ['AIX-003', data.robots.disallows('oai-searchbot', data.finalUrl) || blockedBot(data.bots.oaiSearchBot), data.finalUrl],
+    ['AIX-004', data.robots.disallows('perplexitybot', data.finalUrl) || blockedBot(data.bots.perplexityBot), data.finalUrl],
+    ['AIX-005', Object.values(data.bots).some(blockedBot), data.finalUrl]
+  ].filter(([, failed]) => failed).map(([code, , target]) => ({ code, urls: [target] }));
   return {
     root: data.finalUrl,
     origin: data.origin,
@@ -57,14 +58,12 @@ async function pages(root, urls) {
 }
 
 function occurrenceUrls(code, data) {
-  const candidates = HOME_CODES.has(code) ? data.context.pages.filter(page => new URL(page.url).pathname === '/') : data.context.pages;
-  const urls = candidates.filter(page => {
-    const context = emptyContext(data.context.origin, [page], data.context.pageResponses);
-    return evaluate(context).some(result => result.code === code && !result.ok);
-  }).map(page => page.url);
-  if (urls.length) return urls;
   const summaries = data.summaries.filter(summary => statusFailure(code, summary)).map(summary => summary.requestedUrl);
   return summaries.length ? summaries : data.context.pages.map(page => page.url);
+}
+
+function blockedBot(response) {
+  return !response || [401, 403, 429, 503].includes(response.status) || /(?:captcha|challenge-platform|cf-chl-|access denied|verify you are human)/i.test(response.text ?? '');
 }
 
 function statusFailure(code, response) {

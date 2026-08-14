@@ -89,7 +89,7 @@ async function crawlPages(root, origin, sitemapUrls, failures, current) {
   while (queue.length && visited.size < MAX_PAGES) {
     ensureCurrent(current);
     const batch = [];
-    while (queue.length && batch.length < 5 && visited.size + batch.length < MAX_PAGES) {
+    while (queue.length && batch.length < 1 && visited.size + batch.length < MAX_PAGES) {
       const url = queue.shift();
       if (!visited.has(url)) batch.push(url);
     }
@@ -415,7 +415,10 @@ async function post(body) {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const response = await fetch('/api/audit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); }
+      catch { throw new Error(text.match(/error code:\s*(\d+)/i)?.[1] === '1102' ? 'A página excedeu o limite de processamento do servidor.' : 'O servidor devolveu uma resposta inválida.'); }
       if (!response.ok) throw new Error(data.error || 'Falha na auditoria.');
       return data;
     } catch (error) {

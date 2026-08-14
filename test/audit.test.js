@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { onRequest } from '../functions/api/audit.js';
 import { parsePage } from '../functions/_lib/html.js';
 import { publicUrl } from '../functions/_lib/net.js';
 import { evaluate, supportedCodes } from '../functions/_lib/evaluate.js';
@@ -24,6 +25,25 @@ test('endereços privados e protocolos impróprios são recusados', () => {
   assert.throws(() => publicUrl('http://10.0.0.1'));
   assert.throws(() => publicUrl('file:///etc/passwd'));
   assert.equal(publicUrl('example.com').href, 'https://example.com/');
+});
+
+test('bootstrap devolve JSON sem analisar novamente o HTML completo', async t => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, options) => {
+    const url = String(input);
+    const agent = new Headers(options?.headers).get('user-agent') ?? '';
+    if (url.endsWith('/robots.txt')) return new Response('User-agent: *\nAllow: /', { status: 200, headers: { 'content-type': 'text/plain' } });
+    return new Response('<!doctype html><title>Teste</title>', { status: agent.includes('OAI-SearchBot') ? 403 : 200, headers: { 'content-type': 'text/html' } });
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const response = await onRequest({ request: new Request('https://audit.test/api/audit', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'bootstrap', url: 'example.com' })
+  }) });
+  const data = await response.json();
+  assert.equal(response.headers.get('content-type'), 'application/json');
+  assert.equal(data.root, 'https://example.com/');
+  assert.deepEqual(data.failures.map(item => item.code), ['AIX-003', 'AIX-005']);
 });
 
 test('fixture válida e mutações mínimas produzem resultados distintos', () => {
