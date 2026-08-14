@@ -15,6 +15,7 @@ const PAGE_CONCURRENCY = 12;
 const FETCH_BATCH_SIZE = 20;
 const FETCH_CONCURRENCY = 6;
 const OPTIONAL_CODES = new Set(['PRD-002', 'PRD-003']);
+const liveRows = new WeakMap();
 let run = 0;
 let reportUrl = '';
 let auditState = {};
@@ -63,6 +64,7 @@ form.addEventListener('submit', async event => {
   const rules = await rulesPromise;
   const rows = renderLoading(rules);
   const failures = new Map();
+  liveRows.set(failures, rows);
   button.disabled = true;
   download.hidden = true;
   download.removeAttribute('href');
@@ -424,15 +426,11 @@ function renderLoading(rules, loading = true) {
 function finishRows(rows, failures) {
   for (const [code, indicator] of rows) {
     const urls = [...(failures.get(code) ?? [])].sort();
-    const state = urls.length ? OPTIONAL_CODES.has(code) ? 'optional' : 'fail' : 'pass';
-    indicator.className = `indicator ${state}`;
-    indicator.setAttribute('aria-label', urls.length ? `${state === 'optional' ? 'Melhoria opcional' : 'Problema'} em ${urls.length} páginas` : 'Certo');
-    indicator.replaceChildren();
-    if (urls.length) {
-      const tooltip = document.createElement('span');
-      tooltip.className = 'occurrences';
-      tooltip.textContent = urls.join('\n');
-      indicator.append(tooltip);
+    if (urls.length) showFailure(code, indicator, urls);
+    else {
+      indicator.className = 'indicator pass';
+      indicator.setAttribute('aria-label', 'Certo');
+      indicator.replaceChildren();
     }
   }
   for (const group of results.querySelectorAll('.category-section')) {
@@ -445,6 +443,7 @@ function finishRows(rows, failures) {
 
 function stopRows(rows) {
   for (const indicator of rows.values()) {
+    if (indicator.matches('.fail,.optional')) continue;
     indicator.className = 'indicator';
     indicator.setAttribute('aria-label', 'Não verificado');
   }
@@ -469,7 +468,33 @@ function help(rule) {
   solution.textContent = clean(rule.solution);
   tip.append(detailTitle, detail, solutionTitle, solution);
   button.append(tip);
+  bindPopover(button, tip);
   return button;
+}
+
+function showFailure(code, indicator, urls) {
+  const optional = OPTIONAL_CODES.has(code);
+  indicator.className = `indicator ${optional ? 'optional' : 'fail'}`;
+  indicator.setAttribute('aria-label', `${optional ? 'Melhoria opcional' : 'Problema'} em ${urls.length} páginas`);
+  let popup = indicator.querySelector('.occurrences');
+  if (!popup) {
+    popup = document.createElement('span');
+    popup.className = 'occurrences';
+    indicator.replaceChildren(popup);
+    bindPopover(indicator, popup);
+  }
+  popup.textContent = urls.join('\n');
+}
+
+function bindPopover(trigger, popup) {
+  popup.setAttribute('popover', 'manual');
+  const supported = typeof popup.showPopover === 'function';
+  const show = () => supported ? !popup.matches(':popover-open') && popup.showPopover() : popup.classList.add('open');
+  const hide = () => supported ? popup.matches(':popover-open') && popup.hidePopover() : popup.classList.remove('open');
+  trigger.addEventListener('mouseenter', show);
+  trigger.addEventListener('mouseleave', hide);
+  trigger.addEventListener('focus', show);
+  trigger.addEventListener('blur', hide);
 }
 
 function showSummary(pages, total, failures, limited) {
@@ -837,7 +862,12 @@ function addMany(target, codes, urls) {
 }
 
 function addFailure(target, code, url) {
-  target.set(code, new Set([...(target.get(code) ?? []), url]));
+  const urls = target.get(code) ?? new Set();
+  if (urls.has(url)) return;
+  urls.add(url);
+  target.set(code, urls);
+  const indicator = liveRows.get(target)?.get(code);
+  if (indicator) showFailure(code, indicator, [...urls]);
 }
 
 function mergeResource(target, item) {

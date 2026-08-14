@@ -55,11 +55,11 @@ input:focus { border-color:#111; box-shadow:0 0 0 3px #eee; }
 .indicator.fail { border-color:#e05252; background:#e05252; cursor:help; animation:pop .25s; }
 .indicator.optional { border-color:#e9b949; background:#e9b949; cursor:help; animation:pop .25s; }
 .help { width:21px;height:21px; border:1px solid #d0d0d0; color:#777; font-size:11px; font-weight:750; cursor:help; }
-.tooltip,.occurrences { position:absolute; z-index:30; right:0; bottom:calc(100% + 8px); display:none; width:min(420px,calc(100vw - 54px)); padding:15px 16px; border-radius:13px; color:#f7f7f7; background:#171717; box-shadow:0 12px 35px rgba(0,0,0,.18); font-size:12px; font-weight:400; line-height:1.48; text-align:left; }
+.tooltip,.occurrences { position:fixed; z-index:2147483647; inset:50% 15vw auto auto; display:none; width:min(420px,70vw); max-height:70dvh; margin:0; padding:15px 16px; overflow:auto; transform:translateY(-50%); border:0; border-radius:13px; color:#f7f7f7; background:#171717; box-shadow:0 18px 55px rgba(0,0,0,.28); font-size:12px; font-weight:400; line-height:1.48; text-align:left; scrollbar-width:none; }
+.tooltip:popover-open,.occurrences:popover-open,.tooltip.open,.occurrences.open { display:block; }
 .tooltip strong { display:block; margin:9px 0 3px; color:#fff; }
 .tooltip strong:first-child { margin-top:0; }
-.help:hover .tooltip,.help:focus-visible .tooltip,.indicator:is(.fail,.optional):hover .occurrences,.indicator:is(.fail,.optional):focus-visible .occurrences { display:block; }
-.occurrences { max-height:310px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; scrollbar-width:none; }
+.occurrences { white-space:pre-wrap; overflow-wrap:anywhere; }
 .dashboard { display:grid; min-height:0; align-content:start; gap:12px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; }
 .panel { padding:18px; border:1px solid #e8e8e8; border-radius:18px; background:#fff; animation:rise .4s both; }
 .health-panel { display:flex; align-items:center; gap:18px; }
