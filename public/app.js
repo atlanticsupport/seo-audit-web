@@ -3,6 +3,7 @@ const input = document.querySelector('#url');
 const button = form.querySelector('button');
 const summary = document.querySelector('#summary');
 const results = document.querySelector('#results');
+const download = document.querySelector('#download-report');
 const rulesPromise = fetch('/supported-rules.json').then(response => response.json());
 const MAX_PAGES = 50_000;
 const MAX_EXTERNAL = 10_000;
@@ -27,6 +28,8 @@ form.addEventListener('submit', async event => {
   const rows = renderLoading(rules);
   const failures = new Map();
   button.disabled = true;
+  download.hidden = true;
+  download.removeAttribute('href');
   summary.hidden = true;
   summary.classList.remove('error');
 
@@ -48,6 +51,9 @@ form.addEventListener('submit', async event => {
     applyGraphChecks(failures, pageData.pages, sitemapItems, sitemapUrls, bootstrap.root, origin, fetches[0]);
     finishRows(rows, failures);
     showSummary(pageData.count, rows.size, failures.size, pageData.limitReached);
+    download.href = `data:text/markdown;charset=utf-8,${encodeURIComponent(buildReport(bootstrap.root, pageData.count, rules, failures, pageData.limitReached))}`;
+    download.download = `seo-audit-${new URL(bootstrap.root).hostname}-${new Date().toISOString().slice(0, 10)}.md`;
+    download.hidden = false;
   } catch (error) {
     if (current === run) {
       stopRows(rows);
@@ -388,6 +394,31 @@ function showSummary(pages, total, problems, limited) {
     summary.append(item);
   }
   if (limited) summary.append(document.createTextNode(` Limite de ${MAX_PAGES} URLs atingido.`));
+}
+
+function buildReport(site, pages, rules, failures, limited) {
+  const problems = rules.filter(rule => failures.has(rule.code)).length;
+  const lines = [
+    '# Relatório completo de auditoria SEO', '',
+    `- Site: ${site}`,
+    `- Gerado: ${new Date().toISOString()}`,
+    `- Páginas analisadas: ${pages}`,
+    `- Verificações: ${rules.length}`,
+    `- Certas: ${rules.length - problems}`,
+    `- Problemas: ${problems}`,
+    `- Limite atingido: ${limited ? 'sim' : 'não'}`
+  ];
+  let category;
+  for (const rule of rules) {
+    if (rule.category !== category) {
+      category = rule.category;
+      lines.push('', `## ${category}`);
+    }
+    const urls = [...(failures.get(rule.code) ?? [])].sort();
+    lines.push('', `### ${rule.code} / ${rule.name}`, '', `**Estado:** ${urls.length ? 'Problema' : 'Certo'}`, '', `**Detalhes:** ${clean(rule.details)}`, '', `**Solução:** ${clean(rule.solution)}`);
+    if (urls.length) lines.push('', '**Páginas afetadas:**', '', ...urls.map(url => `- ${url}`));
+  }
+  return `${lines.join('\n')}\n`;
 }
 
 function addFailures(target, items) {

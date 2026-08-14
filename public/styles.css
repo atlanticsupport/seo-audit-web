@@ -67,17 +67,41 @@ form button {
 form button:hover { opacity: .84; }
 form button:disabled { cursor: wait; opacity: .45; }
 
+.summary-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+}
+
 .summary {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
   gap: 8px 18px;
-  margin-top: 22px;
   color: #777;
   font-size: 13px;
 }
 
 .summary.error { color: #b72f2f; }
 .summary strong { color: #111; }
+
+.download-report {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  padding: 8px;
+  place-items: center;
+  border: 1px solid #d7d7d7;
+  border-radius: 11px;
+  color: #1c274c;
+  background: #fff;
+  cursor: pointer;
+}
+
+.download-report:hover, .download-report:focus-visible { border-color: #111; }
+.download-report[hidden] { display: none; }
+.download-report svg { width: 100%; height: 100%; fill: currentColor; }
 .results { margin-top: 28px; }
 
 .category {
