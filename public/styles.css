@@ -168,6 +168,12 @@ form button:disabled { cursor: wait; opacity: .45; }
   cursor: help;
 }
 
+.indicator.optional {
+  border-color: #e9b949;
+  background: #e9b949;
+  cursor: help;
+}
+
 .help {
   width: 22px;
   height: 22px;
@@ -208,7 +214,7 @@ form button:disabled { cursor: wait; opacity: .45; }
 }
 
 .tooltip strong:first-child { margin-top: 0; }
-.help:hover .tooltip, .help:focus-visible .tooltip, .indicator.fail:hover .occurrences, .indicator.fail:focus-visible .occurrences { display: block; }
+.help:hover .tooltip, .help:focus-visible .tooltip, .indicator:is(.fail, .optional):hover .occurrences, .indicator:is(.fail, .optional):focus-visible .occurrences { display: block; }
 
 .occurrences {
   max-height: 310px;

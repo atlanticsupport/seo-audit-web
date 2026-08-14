@@ -410,7 +410,7 @@ add(['LOC-007'], context => {
 });
 add(['LOC-008'], context => {
   const pages = htmlPages(context).filter(page => page.hreflang.length);
-  return issueFree(pages, page => page.hreflang.some((item, index) => page.hreflang.findIndex(other => normalize(other.url) === normalize(item.url) && other.language !== item.language) !== -1 && page.hreflang.findIndex(other => normalize(other.url) === normalize(item.url)) !== index), pages.length > 0);
+  return issueFree(pages, page => page.hreflang.filter(item => item.language !== 'x-default').some(item => page.hreflang.some(other => other.language !== 'x-default' && normalize(other.url) === normalize(item.url) && primaryLanguage(other.language) !== primaryLanguage(item.language))), pages.length > 0);
 });
 add(['LOC-009'], context => {
   const pages = htmlPages(context).filter(page => page.hreflang.length);

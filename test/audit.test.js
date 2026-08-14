@@ -31,7 +31,9 @@ test('bootstrap devolve JSON sem analisar novamente o HTML completo', async t =>
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input, options) => {
     const url = String(input);
-    const agent = new Headers(options?.headers).get('user-agent') ?? '';
+    const headers = new Headers(options?.headers);
+    const agent = headers.get('user-agent') ?? '';
+    assert.equal(headers.get('accept-encoding'), 'br, gzip');
     if (url.endsWith('/robots.txt')) return new Response('User-agent: *\nAllow: /', { status: 200, headers: { 'content-type': 'text/plain' } });
     return new Response('<!doctype html><title>Teste</title>', { status: agent.includes('OAI-SearchBot') ? 403 : 200, headers: { 'content-type': 'text/html' } });
   };
@@ -75,6 +77,12 @@ test('fixture válida e mutações mínimas produzem resultados distintos', () =
 
   const noindexResults = resultMap(context(page('<html lang="pt"><head><meta name="robots" content="noindex"></head><body></body></html>')));
   assert.equal(noindexResults.get('IDX-005'), false);
+
+  const fallback = resultMap(context(page('<html lang="pt-PT"><head><link rel="alternate" hreflang="pt-PT" href="https://example.com/"><link rel="alternate" hreflang="x-default" href="https://example.com/"></head></html>')));
+  assert.equal(fallback.get('LOC-008'), true);
+
+  const conflicting = resultMap(context(page('<html lang="pt"><head><link rel="alternate" hreflang="pt-PT" href="https://example.com/"><link rel="alternate" hreflang="en-GB" href="https://example.com/"></head></html>')));
+  assert.equal(conflicting.get('LOC-008'), false);
 });
 
 function page(text) {

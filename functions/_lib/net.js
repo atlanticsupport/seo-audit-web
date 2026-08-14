@@ -33,6 +33,7 @@ export async function fetchLimited(value, options = {}) {
   const maxBytes = options.maxBytes ?? 600_000;
   const headers = new Headers(options.headers);
   headers.set('accept', options.accept ?? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.5');
+  headers.set('accept-encoding', 'br, gzip');
   headers.set('user-agent', options.userAgent ?? 'Mozilla/5.0 (compatible; VerifiableSEOAudit/1.0; +https://seo-audit-web.pages.dev)');
   let url = publicUrl(value, options.base);
   const redirects = [];

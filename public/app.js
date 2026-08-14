@@ -10,6 +10,7 @@ const MAX_EXTERNAL = 10_000;
 const PAGE_CONCURRENCY = 12;
 const FETCH_BATCH_SIZE = 20;
 const FETCH_CONCURRENCY = 6;
+const OPTIONAL_CODES = new Set(['PRD-002', 'PRD-003']);
 let run = 0;
 
 input.addEventListener('input', () => input.setCustomValidity(''));
@@ -53,7 +54,7 @@ form.addEventListener('submit', async event => {
     ensureCurrent(current);
     applyGraphChecks(failures, pageData.pages, sitemapItems, sitemapUrls, bootstrap.root, origin, fetches[0]);
     finishRows(rows, failures);
-    showSummary(pageData.count, rows.size, failures.size, pageData.limitReached);
+    showSummary(pageData.count, rows.size, failures, pageData.limitReached);
     download.href = `data:text/markdown;charset=utf-8,${encodeURIComponent(buildReport(bootstrap.root, pageData.count, rules, failures, pageData.limitReached))}`;
     download.download = `seo-audit-${new URL(bootstrap.root).hostname}-${new Date().toISOString().slice(0, 10)}.md`;
     download.hidden = false;
@@ -283,8 +284,8 @@ function applyHreflangChecks(failures, pages, responses) {
     if (!page.hreflang.some(item => item.language === 'x-default')) addFailure(failures, 'LOC-013', page.url);
     if (!page.hreflang.some(item => item.language !== 'x-default' && normalize(item.url) === normalize(page.url))) addFailure(failures, 'LOC-009', page.url);
     if (new Set(page.hreflang.map(item => item.language)).size !== page.hreflang.length) addFailure(failures, 'LOC-007', page.url);
-    const urls = groupBy(page.hreflang, item => normalize(item.url));
-    if ([...urls.values()].some(items => new Set(items.map(item => item.language)).size > 1)) addFailure(failures, 'LOC-008', page.url);
+    const urls = groupBy(page.hreflang.filter(item => item.language !== 'x-default'), item => normalize(item.url));
+    if ([...urls.values()].some(items => new Set(items.map(item => primaryLanguage(item.language))).size > 1)) addFailure(failures, 'LOC-008', page.url);
 
     for (const annotation of page.hreflang) {
       const target = responses.get(normalize(annotation.url));
@@ -360,8 +361,9 @@ function renderLoading(rules) {
 function finishRows(rows, failures) {
   for (const [code, indicator] of rows) {
     const urls = [...(failures.get(code) ?? [])].sort();
-    indicator.className = `indicator ${urls.length ? 'fail' : 'pass'}`;
-    indicator.setAttribute('aria-label', urls.length ? `Problema encontrado em ${urls.length} páginas` : 'Certo');
+    const state = urls.length ? OPTIONAL_CODES.has(code) ? 'optional' : 'fail' : 'pass';
+    indicator.className = `indicator ${state}`;
+    indicator.setAttribute('aria-label', urls.length ? `${state === 'optional' ? 'Melhoria opcional' : 'Problema'} em ${urls.length} páginas` : 'Certo');
     indicator.replaceChildren();
     if (urls.length) {
       const tooltip = document.createElement('span');
@@ -400,10 +402,12 @@ function help(rule) {
   return button;
 }
 
-function showSummary(pages, total, problems, limited) {
+function showSummary(pages, total, failures, limited) {
+  const optional = [...failures.keys()].filter(code => OPTIONAL_CODES.has(code)).length;
+  const problems = failures.size - optional;
   summary.hidden = false;
   summary.replaceChildren();
-  for (const [value, label] of [[pages, ' páginas'], [total - problems, ' certos'], [problems, ' problemas']]) {
+  for (const [value, label] of [[pages, ' páginas'], [total - problems - optional, ' certos'], [optional, ' opcionais'], [problems, ' problemas']]) {
     const item = document.createElement('span');
     const strong = document.createElement('strong');
     strong.textContent = value;
@@ -414,14 +418,16 @@ function showSummary(pages, total, problems, limited) {
 }
 
 function buildReport(site, pages, rules, failures, limited) {
-  const problems = rules.filter(rule => failures.has(rule.code)).length;
+  const optional = rules.filter(rule => OPTIONAL_CODES.has(rule.code) && failures.has(rule.code)).length;
+  const problems = rules.filter(rule => !OPTIONAL_CODES.has(rule.code) && failures.has(rule.code)).length;
   const lines = [
     '# Relatório completo de auditoria SEO', '',
     `- Site: ${site}`,
     `- Gerado: ${new Date().toISOString()}`,
     `- Páginas analisadas: ${pages}`,
     `- Verificações: ${rules.length}`,
-    `- Certas: ${rules.length - problems}`,
+    `- Certas: ${rules.length - problems - optional}`,
+    `- Melhorias opcionais: ${optional}`,
     `- Problemas: ${problems}`,
     `- Limite atingido: ${limited ? 'sim' : 'não'}`
   ];
@@ -432,7 +438,7 @@ function buildReport(site, pages, rules, failures, limited) {
       lines.push('', `## ${category}`);
     }
     const urls = [...(failures.get(rule.code) ?? [])].sort();
-    lines.push('', `### ${rule.code} / ${rule.name}`, '', `**Estado:** ${urls.length ? 'Problema' : 'Certo'}`, '', `**Detalhes:** ${clean(rule.details)}`, '', `**Solução:** ${clean(rule.solution)}`);
+    lines.push('', `### ${rule.code} / ${rule.name}`, '', `**Estado:** ${urls.length ? OPTIONAL_CODES.has(rule.code) ? 'Melhoria opcional' : 'Problema' : 'Certo'}`, '', `**Detalhes:** ${clean(rule.details)}`, '', `**Solução:** ${clean(rule.solution)}`);
     if (urls.length) lines.push('', '**Páginas afetadas:**', '', ...urls.map(url => `- ${url}`));
   }
   return `${lines.join('\n')}\n`;
