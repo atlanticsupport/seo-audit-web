@@ -7,6 +7,9 @@ const download = document.querySelector('#download-report');
 const rulesPromise = fetch('/supported-rules.json').then(response => response.json());
 const MAX_PAGES = 50_000;
 const MAX_EXTERNAL = 10_000;
+const PAGE_CONCURRENCY = 12;
+const FETCH_BATCH_SIZE = 6;
+const FETCH_CONCURRENCY = 6;
 let run = 0;
 
 input.addEventListener('input', () => input.setCustomValidity(''));
@@ -92,22 +95,13 @@ async function crawlPages(root, origin, sitemapUrls, failures, current) {
   const external = new Set();
   const resources = new Map();
 
-  while (queue.length && visited.size < MAX_PAGES) {
-    ensureCurrent(current);
-    const batch = [];
-    while (queue.length && batch.length < 1 && visited.size + batch.length < MAX_PAGES) {
-      const url = queue.shift();
-      if (!visited.has(url)) batch.push(url);
-    }
-    if (!batch.length) continue;
-    const data = await post({ action: 'pages', root, urls: batch });
-    batch.forEach(url => visited.add(url));
+  const visit = async url => {
+    const data = await post({ action: 'pages', root, urls: [url] });
     addFailures(failures, data.failures);
 
     for (const page of data.summaries) {
       pages.set(normalize(page.requestedUrl), page);
       pages.set(normalize(page.finalUrl), page);
-      visited.add(normalize(page.requestedUrl));
       queued.add(normalize(page.finalUrl));
       for (const link of page.links) {
         if (sameOrigin(link.url, origin) && !likelyPage(link.url)) mergeResource(resources, { url: link.url, kinds: ['internal-target'], owners: [page.url] });
@@ -115,48 +109,71 @@ async function crawlPages(root, origin, sitemapUrls, failures, current) {
       for (const canonical of page.canonical) if (sameOrigin(canonical, origin) && !likelyPage(canonical)) mergeResource(resources, { url: canonical, kinds: ['canonical-target'], owners: [page.url] });
     }
     for (const resource of data.resources) mergeResource(resources, resource);
-    for (const url of data.external) if (external.size < MAX_EXTERNAL) external.add(normalize(url));
-    for (const url of data.discovered) {
-      const normalized = normalize(url);
+    for (const target of data.external) if (external.size < MAX_EXTERNAL) external.add(normalize(target));
+    for (const target of data.discovered) {
+      const normalized = normalize(target);
       if (sameOrigin(normalized, origin) && likelyPage(normalized) && !queued.has(normalized) && !visited.has(normalized) && queued.size < MAX_PAGES) {
         queued.add(normalized);
         queue.push(normalized);
       }
     }
+  };
+
+  const first = queue.shift();
+  if (first) {
+    visited.add(first);
+    await visit(first);
   }
+  await Promise.all(Array.from({ length: PAGE_CONCURRENCY }, async () => {
+    while (queue.length && visited.size < MAX_PAGES) {
+      ensureCurrent(current);
+      const url = queue.shift();
+      if (visited.has(url)) continue;
+      visited.add(url);
+      await visit(url);
+    }
+  }));
   return { pages, external, resources, count: uniqueObjects([...pages.values()]).length, limitReached: queue.length > 0 || sitemapUrls.size + 1 > MAX_PAGES };
 }
 
 async function inspectResources(resources, failures, current) {
   const entries = [...resources.values()];
   const facts = new Map();
-  for (let index = 0; index < entries.length; index += 20) {
-    ensureCurrent(current);
-    const batch = entries.slice(index, index + 20);
-    const data = await post({ action: 'fetch', entries: batch.map(({ url, kinds }) => ({ url, kinds })) });
-    for (const item of data.items) {
-      const resource = resources.get(normalize(item.url)) ?? batch.find(entry => normalize(entry.url) === normalize(item.url));
-      const owners = resource?.owners?.length ? resource.owners : [item.url];
-      facts.set(normalize(item.url), item);
-      applyResourceFailures(failures, item, owners);
+  let index = 0;
+  await Promise.all(Array.from({ length: FETCH_CONCURRENCY }, async () => {
+    while (index < entries.length) {
+      ensureCurrent(current);
+      const batch = entries.slice(index, index + FETCH_BATCH_SIZE);
+      index += FETCH_BATCH_SIZE;
+      const data = await post({ action: 'fetch', entries: batch.map(({ url, kinds }) => ({ url, kinds })) });
+      for (const item of data.items) {
+        const resource = resources.get(normalize(item.url)) ?? batch.find(entry => normalize(entry.url) === normalize(item.url));
+        const owners = resource?.owners?.length ? resource.owners : [item.url];
+        facts.set(normalize(item.url), item);
+        applyResourceFailures(failures, item, owners);
+      }
     }
-  }
+  }));
   return facts;
 }
 
 async function inspectExternal(urls, failures, current) {
   const values = [...urls];
-  for (let index = 0; index < values.length; index += 20) {
-    ensureCurrent(current);
-    const batch = values.slice(index, index + 20);
-    const data = await post({ action: 'fetch', entries: batch.map(url => ({ url, kinds: ['external'] })) });
-    for (const item of data.items) {
-      if (item.redirects.length) addFailure(failures, 'EXT-001', item.url);
-      if (item.status >= 400 && item.status < 500) addFailure(failures, 'EXT-002', item.url);
-      if (item.status >= 500) addFailure(failures, 'EXT-003', item.url);
-      if (item.error === 'timeout') addFailure(failures, 'EXT-004', item.url);
+  let index = 0;
+  await Promise.all(Array.from({ length: FETCH_CONCURRENCY }, async () => {
+    while (index < values.length) {
+      ensureCurrent(current);
+      const batch = values.slice(index, index + FETCH_BATCH_SIZE);
+      index += FETCH_BATCH_SIZE;
+      const data = await post({ action: 'fetch', entries: batch.map(url => ({ url, kinds: ['external'] })) });
+      for (const item of data.items) {
+        if (item.redirects.length) addFailure(failures, 'EXT-001', item.url);
+        if (item.status >= 400 && item.status < 500) addFailure(failures, 'EXT-002', item.url);
+        if (item.status >= 500) addFailure(failures, 'EXT-003', item.url);
+        if (item.error === 'timeout') addFailure(failures, 'EXT-004', item.url);
+      }
     }
-  }
+  }));
 }
 
 function applyResourceFailures(failures, item, owners) {
