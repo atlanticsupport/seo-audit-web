@@ -8,7 +8,7 @@ const rulesPromise = fetch('/supported-rules.json').then(response => response.js
 const MAX_PAGES = 50_000;
 const MAX_EXTERNAL = 10_000;
 const PAGE_CONCURRENCY = 12;
-const FETCH_BATCH_SIZE = 6;
+const FETCH_BATCH_SIZE = 20;
 const FETCH_CONCURRENCY = 6;
 let run = 0;
 
