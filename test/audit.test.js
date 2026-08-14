@@ -29,6 +29,27 @@ test('a interface respeita a CSP sem estilos inline', async () => {
   assert.doesNotMatch(app, /\.style\.|setAttribute\(['"]style/);
 });
 
+test('o relatório para LLM exporta só findings e referencia URLs sem repetição', async () => {
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  const source = app.slice(app.indexOf('function buildReport'), app.indexOf('function resetRanking'));
+  const buildReport = Function('OPTIONAL_CODES', 'clean', `${source}; return buildReport;`)(new Set(['OPT']), value => String(value ?? '').replace(/\s+/g, ' ').trim());
+  const report = buildReport({
+    site: 'https://example.com/', pages: 2, pagesMap: new Map(), limited: false, gsc: null, serp: null, comparisons: [],
+    rules: [
+      { code: 'ERR', name: 'Erro', category: 'Técnico', details: 'Falha real.', solution: 'Corrigir.' },
+      { code: 'OPT', name: 'Opcional', category: 'Conteúdo', details: 'Melhoria.', solution: 'Otimizar.' },
+      { code: 'PASS', name: 'Correto', category: 'Técnico', details: 'Texto inútil.', solution: 'Nada.' }
+    ],
+    failures: new Map([['ERR', new Set(['https://example.com/a'])], ['OPT', new Set(['https://example.com/a'])]])
+  });
+  assert.match(report, /^# SEO_AUDIT_V2/m);
+  assert.match(report, /scan: pages=2; checks=3; passed=1; optional=1; errors=1; crawl_limited=false/);
+  assert.match(report, /### ERR\|error\|Técnico\|Erro/);
+  assert.match(report, /### OPT\|optional\|Conteúdo\|Opcional/);
+  assert.doesNotMatch(report, /PASS|Texto inútil|Nada\./);
+  assert.equal(report.match(/https:\/\/example\.com\/a/g)?.length, 1);
+});
+
 test('endereços privados e protocolos impróprios são recusados', () => {
   assert.throws(() => publicUrl('http://127.0.0.1'));
   assert.throws(() => publicUrl('http://10.0.0.1'));

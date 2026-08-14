@@ -510,46 +510,44 @@ function showSummary(pages, total, failures, limited) {
 }
 
 function buildReport({ site, pages, pagesMap, rules, failures, limited, gsc, serp, comparisons }) {
-  const optional = rules.filter(rule => OPTIONAL_CODES.has(rule.code) && failures.has(rule.code)).length;
-  const problems = rules.filter(rule => !OPTIONAL_CODES.has(rule.code) && failures.has(rule.code)).length;
+  const findings = rules.flatMap(rule => {
+    const urls = [...(failures.get(rule.code) ?? [])].sort();
+    return urls.length ? [{ rule, urls }] : [];
+  });
+  const optional = findings.filter(({ rule }) => OPTIONAL_CODES.has(rule.code)).length;
+  const problems = findings.length - optional;
+  const urls = [...new Set(findings.flatMap(finding => finding.urls))].sort();
+  const urlIds = new Map(urls.map((url, index) => [url, `U${index + 1}`]));
   const lines = [
-    '# Relatório completo de auditoria SEO', '',
-    `- Site: ${site}`,
-    `- Gerado: ${new Date().toISOString()}`,
-    `- Páginas analisadas: ${pages}`,
-    `- Verificações: ${rules.length}`,
-    `- Certas: ${rules.length - problems - optional}`,
-    `- Melhorias opcionais: ${optional}`,
-    `- Problemas: ${problems}`,
-    `- Limite atingido: ${limited ? 'sim' : 'não'}`
+    '# SEO_AUDIT_V2',
+    'schema: seo-audit/2',
+    `site: ${site}`,
+    `generated_at: ${new Date().toISOString()}`,
+    `scan: pages=${pages}; checks=${rules.length}; passed=${rules.length - findings.length}; optional=${optional}; errors=${problems}; crawl_limited=${Boolean(limited)}`
   ];
   if (gsc) {
     const row = gsc.overall;
-    lines.push('', '## Desempenho no Google Search Console', '',
-      `- Período: ${gsc.currentPeriod.startDate} a ${gsc.currentPeriod.endDate}`,
-      `- Cliques: ${number(row.clicks)}`,
-      `- Impressões: ${number(row.impressions)}`,
-      `- CTR: ${percent(row.ctr)}`,
-      `- Posição média: ${decimal(row.position)}`);
+    lines.push('', '## GSC',
+      `period: ${gsc.currentPeriod.startDate}/${gsc.currentPeriod.endDate}`,
+      `metrics: clicks=${row.clicks}; impressions=${row.impressions}; ctr=${row.ctr}; avg_position=${row.position}`);
   }
   if (serp) {
     const profiles = competitorProfiles(serp);
-    lines.push('', '## Ranking real', '', '| Pesquisa | Posição | URL |', '|---|---:|---|', ...serp.results.map(item => `| ${escapeCell(item.query)} | ${item.ownPosition ?? '>20'} | ${escapeCell(item.ownUrl || 'Não encontrada')} |`));
-    lines.push('', '## Concorrentes automáticos', '', '| Domínio | Visibilidade | Top 10 |', '|---|---:|---:|', ...profiles.slice(0, 15).map(item => `| ${item.domain} | ${decimal(item.score)} | ${item.top10} |`));
+    lines.push('', '## RANKINGS', 'query\tposition\turl', ...serp.results.map(item => `${clean(item.query)}\t${item.ownPosition ?? 'GT20'}\t${item.ownUrl || '-'}`));
+    lines.push('', '## COMPETITORS', 'domain\tvisibility\ttop10\tqueries', ...profiles.slice(0, 15).map(item => `${item.domain}\t${decimal(item.score)}\t${item.top10}\t${item.queries}`));
   }
   if (serp || gsc) {
-    const opportunities = buildOpportunities(serp, gsc, comparisons, pagesMap, site);
-    lines.push('', '## Plano priorizado', '', ...opportunities.map((item, index) => `${index + 1}. **${item.title}** — ${item.detail}`));
+    const opportunities = buildOpportunities(serp, gsc, comparisons, pagesMap, site).slice(0, 60);
+    lines.push('', '## ACTIONS', 'priority\tsignal\taction\tevidence_or_fix', ...opportunities.map(item => `${item.priority}\t${clean(item.label) || '-'}\t${clean(item.title)}\t${clean(item.detail)}`));
   }
-  let category;
-  for (const rule of rules) {
-    if (rule.category !== category) {
-      category = rule.category;
-      lines.push('', `## ${category}`);
-    }
-    const urls = [...(failures.get(rule.code) ?? [])].sort();
-    lines.push('', `### ${rule.code} / ${rule.name}`, '', `**Estado:** ${urls.length ? OPTIONAL_CODES.has(rule.code) ? 'Melhoria opcional' : 'Problema' : 'Certo'}`, '', `**Detalhes:** ${clean(rule.details)}`, '', `**Solução:** ${clean(rule.solution)}`);
-    if (urls.length) lines.push('', '**Páginas afetadas:**', '', ...urls.map(url => `- ${url}`));
+  if (urls.length) lines.push('', '## URLS', 'id\turl', ...urls.map(url => `${urlIds.get(url)}\t${url}`));
+  lines.push('', '## FINDINGS');
+  if (!findings.length) lines.push('none');
+  for (const { rule, urls: affected } of findings) {
+    lines.push('', `### ${rule.code}|${OPTIONAL_CODES.has(rule.code) ? 'optional' : 'error'}|${clean(rule.category)}|${clean(rule.name)}`,
+      `urls: ${affected.map(url => urlIds.get(url)).join(',')}`,
+      `details: ${clean(rule.details).replace(/\s*Referência oficial\.?$/i, '')}`,
+      `fix: ${clean(rule.solution).replace(/\s*Referência oficial\.?$/i, '')}`);
   }
   return `${lines.join('\n')}\n`;
 }
@@ -863,7 +861,6 @@ function compactUrl(value) { try { const url = new URL(value); return `${url.hos
 function number(value) { return new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 }).format(Number(value) || 0); }
 function decimal(value) { return new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 1 }).format(Number(value) || 0); }
 function percent(value) { return new Intl.NumberFormat('pt-PT', { style: 'percent', maximumFractionDigits: 2 }).format(Number(value) || 0); }
-function escapeCell(value) { return String(value).replaceAll('|', '\\|').replace(/\s+/g, ' '); }
 function escapeRegExp(value) { return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 function addFailures(target, items) {
