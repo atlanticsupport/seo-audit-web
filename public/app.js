@@ -1,10 +1,15 @@
 const form = document.querySelector('#audit-form');
 const input = document.querySelector('#url');
-const button = form.querySelector('button');
-const summary = document.querySelector('#summary');
+const button = form.querySelector('.primary');
+const market = document.querySelector('#market');
+const workspace = document.querySelector('#workspace');
+const notice = document.querySelector('#notice');
 const results = document.querySelector('#results');
 const download = document.querySelector('#download-report');
+const gscConnect = document.querySelector('#gsc-connect');
+const serperKey = document.querySelector('#serper-key');
 const rulesPromise = fetch('/supported-rules.json').then(response => response.json());
+const GSC_ORIGIN = 'https://seo-gsc-oauth.support-e04.workers.dev';
 const MAX_PAGES = 50_000;
 const MAX_EXTERNAL = 10_000;
 const PAGE_CONCURRENCY = 12;
@@ -12,6 +17,23 @@ const FETCH_BATCH_SIZE = 20;
 const FETCH_CONCURRENCY = 6;
 const OPTIONAL_CODES = new Set(['PRD-002', 'PRD-003']);
 let run = 0;
+let reportUrl = '';
+let auditState = {};
+
+const oauth = new URLSearchParams(location.hash.slice(1)).get('gsc');
+if (oauth) {
+  sessionStorage.setItem('gsc-session', oauth);
+  history.replaceState(null, '', `${location.pathname}${location.search}`);
+}
+if (sessionStorage.getItem('gsc-session')) {
+  gscConnect.textContent = 'GSC ligado';
+  gscConnect.classList.add('connected');
+}
+if (sessionStorage.getItem('serper-key')) serperKey.value = sessionStorage.getItem('serper-key');
+serperKey.addEventListener('change', () => serperKey.value ? sessionStorage.setItem('serper-key', serperKey.value) : sessionStorage.removeItem('serper-key'));
+gscConnect.addEventListener('click', () => {
+  location.href = `${GSC_ORIGIN}/oauth/start?return_to=${encodeURIComponent(`${location.origin}${location.pathname}`)}`;
+});
 
 input.addEventListener('input', () => input.setCustomValidity(''));
 
@@ -32,10 +54,11 @@ form.addEventListener('submit', async event => {
   const rows = renderLoading(rules);
   const failures = new Map();
   button.disabled = true;
+  workspace.hidden = false;
   download.hidden = true;
   download.removeAttribute('href');
-  summary.hidden = true;
-  summary.classList.remove('error');
+  resetRanking();
+  showNotice('A mapear páginas, recursos e sinais de pesquisa…');
 
   try {
     const bootstrap = await post({ action: 'bootstrap', url });
@@ -44,6 +67,7 @@ form.addEventListener('submit', async event => {
     addFailures(failures, bootstrap.failures);
 
     const origin = bootstrap.origin;
+    const gscPromise = loadGsc(bootstrap.root).catch(error => ({ error: error.message }));
     const sitemapItems = await crawlSitemaps(bootstrap.sitemapSeeds, origin, current);
     const sitemapUrls = new Set(sitemapItems.filter(item => item.kind === 'urlset').flatMap(item => item.urls).filter(url => sameOrigin(url, origin) && likelyPage(url)).map(normalize));
     const pageData = await crawlPages(bootstrap.root, origin, sitemapUrls, failures, current);
@@ -55,15 +79,33 @@ form.addEventListener('submit', async event => {
     applyGraphChecks(failures, pageData.pages, sitemapItems, sitemapUrls, bootstrap.root, origin, fetches[0]);
     finishRows(rows, failures);
     showSummary(pageData.count, rows.size, failures, pageData.limitReached);
-    download.href = `data:text/markdown;charset=utf-8,${encodeURIComponent(buildReport(bootstrap.root, pageData.count, rules, failures, pageData.limitReached))}`;
+
+    const gsc = await gscPromise;
+    ensureCurrent(current);
+    if (!gsc.error) renderGsc(gsc);
+    const queries = keywordCandidates(bootstrap.root, pageData.pages, gsc.error ? null : gsc);
+    let serp = null;
+    let comparisons = [];
+    try {
+      serp = await loadRankings(bootstrap.root, queries);
+      ensureCurrent(current);
+      comparisons = await compareCompetitors(serp, pageData.pages, bootstrap.root, current);
+      renderRankings(serp, gsc.error ? null : gsc, comparisons, pageData.pages, bootstrap.root);
+    } catch (error) {
+      renderRankingUnavailable(error, queries.length, gsc.error ? null : gsc, pageData.pages, bootstrap.root);
+    }
+    auditState = { site: bootstrap.root, pages: pageData.count, pagesMap: pageData.pages, rules, failures, limited: pageData.limitReached, gsc: gsc.error ? null : gsc, serp, comparisons };
+    if (reportUrl) URL.revokeObjectURL(reportUrl);
+    reportUrl = URL.createObjectURL(new Blob([buildReport(auditState)], { type: 'text/markdown;charset=utf-8' }));
+    download.href = reportUrl;
     download.download = `seo-audit-${new URL(bootstrap.root).hostname}-${new Date().toISOString().slice(0, 10)}.md`;
     download.hidden = false;
+    const suffix = [gsc.error && 'GSC não ligado', !serp && 'ranking sem fornecedor'].filter(Boolean).join(' · ');
+    showNotice(`Auditoria concluída${suffix ? ` · ${suffix}` : ''}.`);
   } catch (error) {
     if (current === run) {
       stopRows(rows);
-      summary.hidden = false;
-      summary.classList.add('error');
-      summary.textContent = error instanceof Error ? error.message : 'Não foi possível concluir a auditoria.';
+      showNotice(error instanceof Error ? error.message : 'Não foi possível concluir a auditoria.', true);
     }
   } finally {
     if (current === run) button.disabled = false;
@@ -333,10 +375,18 @@ function renderLoading(rules) {
   const rows = new Map();
   const groups = groupBy(rules, rule => rule.category);
   for (const [category, items] of groups) {
-    const heading = document.createElement('h2');
-    heading.className = 'category';
-    heading.textContent = category;
-    results.append(heading);
+    const group = document.createElement('details');
+    group.className = 'category-group';
+    const heading = document.createElement('summary');
+    const title = document.createElement('strong');
+    title.textContent = category;
+    const count = document.createElement('small');
+    count.textContent = `${items.length} a verificar`;
+    heading.append(title, count);
+    const body = document.createElement('div');
+    body.className = 'category-body';
+    group.append(heading, body);
+    results.append(group);
     for (const rule of items) {
       const row = document.createElement('article');
       row.className = 'row';
@@ -351,7 +401,7 @@ function renderLoading(rules) {
       indicator.className = 'indicator loading';
       indicator.setAttribute('aria-label', 'A verificar');
       row.append(name, indicator, help(rule));
-      results.append(row);
+      body.append(row);
       rows.set(rule.code, indicator);
     }
   }
@@ -371,6 +421,13 @@ function finishRows(rows, failures) {
       tooltip.textContent = urls.join('\n');
       indicator.append(tooltip);
     }
+  }
+  for (const group of results.querySelectorAll('.category-group')) {
+    const indicators = [...group.querySelectorAll('.indicator')];
+    const problems = indicators.filter(item => item.classList.contains('fail')).length;
+    const optional = indicators.filter(item => item.classList.contains('optional')).length;
+    group.querySelector('summary small').textContent = problems ? `${problems} problemas` : optional ? `${optional} opcionais` : `${indicators.length} certos`;
+    group.open = problems > 0;
   }
 }
 
@@ -405,19 +462,14 @@ function help(rule) {
 function showSummary(pages, total, failures, limited) {
   const optional = [...failures.keys()].filter(code => OPTIONAL_CODES.has(code)).length;
   const problems = failures.size - optional;
-  summary.hidden = false;
-  summary.replaceChildren();
-  for (const [value, label] of [[pages, ' páginas'], [total - problems - optional, ' certos'], [optional, ' opcionais'], [problems, ' problemas']]) {
-    const item = document.createElement('span');
-    const strong = document.createElement('strong');
-    strong.textContent = value;
-    item.append(strong, document.createTextNode(label));
-    summary.append(item);
-  }
-  if (limited) summary.append(document.createTextNode(` Limite de ${MAX_PAGES} URLs atingido.`));
+  const score = Math.round((total - problems - optional * .25) / total * 100);
+  const donut = document.querySelector('#health-donut');
+  donut.style.setProperty('--value', score);
+  donut.querySelector('span').textContent = score;
+  document.querySelector('#health-copy').textContent = `${pages} páginas · ${problems} problemas · ${optional} opcionais${limited ? ' · limite atingido' : ''}`;
 }
 
-function buildReport(site, pages, rules, failures, limited) {
+function buildReport({ site, pages, pagesMap, rules, failures, limited, gsc, serp, comparisons }) {
   const optional = rules.filter(rule => OPTIONAL_CODES.has(rule.code) && failures.has(rule.code)).length;
   const problems = rules.filter(rule => !OPTIONAL_CODES.has(rule.code) && failures.has(rule.code)).length;
   const lines = [
@@ -431,6 +483,24 @@ function buildReport(site, pages, rules, failures, limited) {
     `- Problemas: ${problems}`,
     `- Limite atingido: ${limited ? 'sim' : 'não'}`
   ];
+  if (gsc) {
+    const row = gsc.overall;
+    lines.push('', '## Desempenho no Google Search Console', '',
+      `- Período: ${gsc.currentPeriod.startDate} a ${gsc.currentPeriod.endDate}`,
+      `- Cliques: ${number(row.clicks)}`,
+      `- Impressões: ${number(row.impressions)}`,
+      `- CTR: ${percent(row.ctr)}`,
+      `- Posição média: ${decimal(row.position)}`);
+  }
+  if (serp) {
+    const profiles = competitorProfiles(serp);
+    lines.push('', '## Ranking real', '', '| Pesquisa | Posição | URL |', '|---|---:|---|', ...serp.results.map(item => `| ${escapeCell(item.query)} | ${item.ownPosition ?? '>20'} | ${escapeCell(item.ownUrl || 'Não encontrada')} |`));
+    lines.push('', '## Concorrentes automáticos', '', '| Domínio | Visibilidade | Top 10 |', '|---|---:|---:|', ...profiles.slice(0, 15).map(item => `| ${item.domain} | ${decimal(item.score)} | ${item.top10} |`));
+  }
+  if (serp || gsc) {
+    const opportunities = buildOpportunities(serp, gsc, comparisons, pagesMap, site);
+    lines.push('', '## Plano priorizado', '', ...opportunities.map((item, index) => `${index + 1}. **${item.title}** — ${item.detail}`));
+  }
   let category;
   for (const rule of rules) {
     if (rule.category !== category) {
@@ -443,6 +513,278 @@ function buildReport(site, pages, rules, failures, limited) {
   }
   return `${lines.join('\n')}\n`;
 }
+
+function resetRanking() {
+  for (const id of ['opportunities', 'rankings', 'competitors']) {
+    const section = document.querySelector(`#${id}`);
+    section.hidden = true;
+    section.replaceChildren();
+  }
+  document.querySelector('#rank-bars').replaceChildren();
+  document.querySelector('#competitor-bars').replaceChildren();
+  document.querySelector('#ranked-count').textContent = 'Sem pesquisas';
+  document.querySelector('#trend-chart polyline').setAttribute('points', '');
+  for (const id of ['clicks', 'impressions', 'ctr', 'position']) document.querySelector(`#kpi-${id}`).textContent = '—';
+  document.querySelector('#gsc-period').textContent = sessionStorage.getItem('gsc-session') ? 'A carregar' : 'GSC não ligado';
+}
+
+function showNotice(message, error = false) {
+  notice.hidden = !message;
+  notice.classList.toggle('error', error);
+  notice.textContent = message;
+}
+
+async function loadGsc(site) {
+  const session = sessionStorage.getItem('gsc-session');
+  if (!session) throw new Error('GSC não ligado');
+  const property = `sc-domain:${new URL(site).hostname.replace(/^www\./, '')}`;
+  const response = await fetch(`${GSC_ORIGIN}/gsc/ranking?days=28&site=${encodeURIComponent(property)}`, { headers: { authorization: `Bearer ${session}` } });
+  const data = await response.json();
+  if (response.status === 401) {
+    sessionStorage.removeItem('gsc-session');
+    gscConnect.textContent = 'Ligar GSC';
+    gscConnect.classList.remove('connected');
+  }
+  if (!response.ok) throw new Error(data.error || 'Não foi possível ler o Search Console.');
+  return data;
+}
+
+function keywordCandidates(site, pagesMap, gsc) {
+  const host = new URL(site).hostname.replace(/^www\./, '');
+  const brand = host.split('.')[0].replace(/[-_]/g, ' ').toLowerCase();
+  const candidates = [];
+  const add = value => {
+    const phrase = clean(value).replace(/\s+[|–—-]\s+.*$/, '').replace(new RegExp(`\\b${escapeRegExp(brand)}\\b`, 'ig'), '').replace(/\s+/g, ' ').trim();
+    if (phrase.split(/\s+/).length < 2 || phrase.length < 6 || phrase.length > 80 || candidates.some(item => item.toLowerCase() === phrase.toLowerCase())) return;
+    candidates.push(phrase);
+  };
+  for (const row of (gsc?.queries ?? []).sort((a, b) => b.impressions - a.impressions)) if (!row.keys[0].toLowerCase().includes(brand)) add(row.keys[0]);
+  for (const page of uniqueObjects([...pagesMap.values()]).filter(item => item.status === 200)) {
+    add(page.h1);
+    add(page.title);
+    const slug = new URL(page.url).pathname.split('/').filter(Boolean).at(-1)?.replace(/[-_]+/g, ' ');
+    if (slug && !/^\d+$/.test(slug)) add(slug);
+  }
+  return candidates.slice(0, 50);
+}
+
+async function loadRankings(site, queries) {
+  if (!queries.length) throw new Error('Não foram encontrados termos concretos para acompanhar. Ligue o GSC para usar pesquisas reais.');
+  const response = await fetch('/api/rank', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...(serperKey.value ? { 'x-serper-key': serperKey.value } : {}) },
+    body: JSON.stringify({ domain: new URL(site).hostname, market: market.value, queries })
+  });
+  const data = await response.json();
+  if (response.status === 428) throw new Error('Adicione uma chave Serper gratuita em ••• para medir posições e concorrentes reais.');
+  if (!response.ok) throw new Error(data.error || 'Não foi possível medir as posições.');
+  return data;
+}
+
+async function compareCompetitors(serp, pagesMap, site, current) {
+  const profiles = competitorProfiles(serp).slice(0, 5);
+  return (await Promise.all(profiles.map(async profile => {
+    const hit = serp.results.flatMap(result => result.organic.map(item => ({ ...item, query: result.query }))).find(item => item.domain === profile.domain && item.position <= 10);
+    if (!hit) return null;
+    try {
+      const data = await post({ action: 'pages', root: hit.url, urls: [hit.url] });
+      ensureCurrent(current);
+      return { ...profile, query: hit.query, url: hit.url, position: hit.position, page: data.summaries[0] ?? null };
+    } catch { return { ...profile, query: hit.query, url: hit.url, position: hit.position, page: null }; }
+  }))).filter(Boolean);
+}
+
+function renderGsc(gsc) {
+  document.querySelector('#gsc-period').textContent = `${gsc.currentPeriod.startDate} — ${gsc.currentPeriod.endDate}`;
+  document.querySelector('#kpi-clicks').textContent = number(gsc.overall.clicks);
+  document.querySelector('#kpi-impressions').textContent = number(gsc.overall.impressions);
+  document.querySelector('#kpi-ctr').textContent = percent(gsc.overall.ctr);
+  document.querySelector('#kpi-position').textContent = decimal(gsc.overall.position);
+  const values = gsc.daily.map(row => Number(row.position)).filter(Boolean);
+  if (!values.length) return;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const points = values.map((value, index) => `${index / Math.max(values.length - 1, 1) * 420},${12 + (value - min) / span * 96}`).join(' ');
+  document.querySelector('#trend-chart polyline').setAttribute('points', points);
+}
+
+function renderRankings(serp, gsc, comparisons, pagesMap, site) {
+  const rankings = document.querySelector('#rankings');
+  rankings.hidden = false;
+  rankings.append(sectionTitle('Posições reais'));
+  const table = document.createElement('table');
+  table.className = 'ranking-table';
+  const head = table.createTHead().insertRow();
+  for (const label of ['Pesquisa', 'Ao vivo', ...(gsc ? ['GSC 28d'] : []), 'Página encontrada']) { const th = document.createElement('th'); th.textContent = label; head.append(th); }
+  const body = table.createTBody();
+  for (const item of serp.results) {
+    const row = body.insertRow();
+    row.insertCell().textContent = item.query;
+    row.insertCell().textContent = item.ownPosition ?? '>20';
+    if (gsc) {
+      const gscRow = gsc.queries.find(entry => entry.keys[0].toLowerCase() === item.query.toLowerCase());
+      row.insertCell().textContent = gscRow ? decimal(gscRow.position) : '—';
+    }
+    const cell = row.insertCell();
+    if (item.ownUrl) { const link = document.createElement('a'); link.href = item.ownUrl; link.target = '_blank'; link.rel = 'noopener'; link.textContent = compactUrl(item.ownUrl); cell.append(link); }
+    else cell.textContent = 'Não encontrada';
+  }
+  rankings.append(table);
+
+  const distribution = [
+    ['Top 3', serp.results.filter(item => item.ownPosition && item.ownPosition <= 3).length],
+    ['4–10', serp.results.filter(item => item.ownPosition >= 4 && item.ownPosition <= 10).length],
+    ['11–20', serp.results.filter(item => item.ownPosition >= 11 && item.ownPosition <= 20).length],
+    ['Fora do top 20', serp.results.filter(item => !item.ownPosition || item.ownPosition > 20).length]
+  ];
+  setBars(document.querySelector('#rank-bars'), distribution);
+  document.querySelector('#ranked-count').textContent = `${serp.results.length} pesquisas`;
+
+  const profiles = competitorProfiles(serp);
+  setBars(document.querySelector('#competitor-bars'), profiles.slice(0, 8).map(item => [item.domain, item.score]));
+  renderCompetitors(comparisons, profiles);
+  renderOpportunities(buildOpportunities(serp, gsc, comparisons, pagesMap, site));
+}
+
+function renderRankingUnavailable(error, queryCount, gsc, pagesMap, site) {
+  const rankings = document.querySelector('#rankings');
+  rankings.hidden = false;
+  rankings.append(sectionTitle('Posições reais'));
+  const message = document.createElement('p');
+  message.className = 'notice';
+  message.textContent = `${error.message} ${queryCount ? `${queryCount} termos já preparados.` : ''}`.trim();
+  rankings.append(message);
+  if (gsc) {
+    appendGscTable(rankings, gsc);
+    renderOpportunities(buildOpportunities(null, gsc, [], pagesMap, site));
+  }
+}
+
+function appendGscTable(section, gsc) {
+  const table = document.createElement('table');
+  table.className = 'ranking-table';
+  const head = table.createTHead().insertRow();
+  for (const label of ['Pesquisa', 'Posição média', 'Impressões', 'CTR']) { const th = document.createElement('th'); th.textContent = label; head.append(th); }
+  const body = table.createTBody();
+  for (const item of gsc.queries.slice(0, 50)) {
+    const row = body.insertRow();
+    for (const value of [item.keys[0], decimal(item.position), number(item.impressions), percent(item.ctr)]) row.insertCell().textContent = value;
+  }
+  section.append(table);
+}
+
+function renderCompetitors(comparisons, profiles) {
+  const section = document.querySelector('#competitors');
+  section.hidden = false;
+  section.append(sectionTitle('Concorrentes encontrados automaticamente'));
+  const list = document.createElement('div');
+  list.className = 'insight-list';
+  for (const profile of profiles.slice(0, 10)) {
+    const comparison = comparisons.find(item => item.domain === profile.domain);
+    const detail = comparison?.page
+      ? `${profile.top10} aparições no top 10 · página observada para “${comparison.query}”: ${comparison.page.wordCount} palavras, ${comparison.page.imageCount} imagens, schema ${comparison.page.structuredTypes.join(', ') || 'não detetado'}.`
+      : `${profile.top10} aparições no top 10 em ${profile.queries} pesquisas analisadas.`;
+    list.append(insight('low', profile.domain, detail, decimal(profile.score)));
+  }
+  section.append(list);
+}
+
+function renderOpportunities(items) {
+  const section = document.querySelector('#opportunities');
+  section.hidden = false;
+  section.append(sectionTitle(`Plano de melhoria (${items.length})`));
+  const list = document.createElement('div');
+  list.className = 'insight-list';
+  for (const item of items.slice(0, 60)) list.append(insight(item.priority, item.title, item.detail, item.label));
+  if (!items.length) { const empty = document.createElement('p'); empty.className = 'notice'; empty.textContent = 'Não surgiram oportunidades mensuráveis nos dados ligados.'; list.append(empty); }
+  section.append(list);
+}
+
+function buildOpportunities(serp, gsc, comparisons, pagesMap, site) {
+  const items = [];
+  const add = (priority, title, detail, label = '') => items.push({ priority, title, detail, label });
+  const queryRows = new Map((gsc?.queries ?? []).map(row => [row.keys[0].toLowerCase(), row]));
+  const previous = new Map((gsc?.previousQueries ?? []).map(row => [row.keys[0].toLowerCase(), row]));
+  for (const row of gsc?.queries ?? []) {
+    const query = row.keys[0];
+    if (row.impressions >= 10 && row.position >= 4 && row.position <= 20) add(row.position <= 10 ? 'high' : 'medium', `Subir “${query}”`, `A pesquisa teve ${number(row.impressions)} impressões, CTR ${percent(row.ctr)} e posição média ${decimal(row.position)}. Reforce a página que já aparece: alinhe title/H1 com a intenção, cubra entidades e dúvidas presentes nos resultados líderes e aumente links internos contextuais a partir de páginas fortes.`, `#${decimal(row.position)}`);
+    const expected = row.position <= 3 ? .08 : row.position <= 10 ? .025 : row.position <= 20 ? .01 : 0;
+    if (row.impressions >= 20 && expected && row.ctr < expected / 2) add('high', `CTR baixo em “${query}”`, `${number(row.impressions)} impressões mas só ${percent(row.ctr)} de CTR. Reescreva title e description da landing page para explicitar produto, medida/uso, entrega e diferenciação sem alterar a intenção que já posiciona.`, `${percent(row.ctr)} CTR`);
+    const before = previous.get(query.toLowerCase());
+    if (before?.impressions >= 10 && row.position - before.position >= 3) add('medium', `Queda em “${query}”`, `A posição média piorou de ${decimal(before.position)} para ${decimal(row.position)}. Compare a landing page e os atuais top 3 quanto a intenção, atualização, cobertura, links internos, disponibilidade e snippet antes de alterar o URL.`, `−${decimal(row.position - before.position)}`);
+  }
+  const grouped = groupBy(gsc?.queryPages ?? [], row => row.keys[0]);
+  for (const [query, rows] of grouped) if (rows.filter(row => row.impressions > 0).length > 1 && rows.reduce((sum, row) => sum + row.impressions, 0) >= 10) add('high', `Possível canibalização em “${query}”`, `${rows.length} URLs recebem impressões para a mesma pesquisa. Escolha uma landing principal; diferencie intenção das restantes e consolide canonical, links internos e conteúdo quando forem equivalentes.`, `${rows.length} URLs`);
+
+  for (const result of serp?.results ?? []) {
+    const row = queryRows.get(result.query.toLowerCase());
+    if (!result.ownPosition) add(row?.impressions >= 20 ? 'high' : 'medium', `Fora do top 20: “${result.query}”`, `Nenhuma página do domínio surgiu nos 20 resultados do mercado ${serp.market.toUpperCase()}. Analise o tipo de página dominante nos concorrentes e crie ou reoriente uma landing única para essa intenção; só depois reforce ligações internas e autoridade externa.`, '>20');
+    else if (result.ownPosition >= 11) add('medium', `Página 2: “${result.query}”`, `A página ${compactUrl(result.ownUrl)} está em #${result.ownPosition}. Compare diretamente o seu title, H1, cobertura, schema e formato com os três concorrentes acima e aplique apenas diferenças que respondam melhor à intenção.`, `#${result.ownPosition}`);
+    if (result.cannibalization) add('high', `Duas páginas no SERP para “${result.query}”`, `O domínio tem múltiplos resultados orgânicos. Confirme se servem intenções distintas; caso contrário, consolide sinais numa URL principal e atualize links internos/canonical.`, 'Duplicado');
+    if (result.ownUrl && ((market.value === 'pt' && /\/es(?:\/|$)/i.test(result.ownUrl)) || (market.value === 'es' && /\/pt(?:\/|$)/i.test(result.ownUrl)))) add('high', `Idioma errado em “${result.query}”`, `${compactUrl(result.ownUrl)} aparece no mercado ${serp.market.toUpperCase()}. Corrija hreflang recíproco, canonical próprio, linguagem do conteúdo e links internos para que a variante certa receba os sinais.`, 'Localização');
+  }
+
+  for (const comparison of comparisons) {
+    if (!comparison.page) continue;
+    const result = serp.results.find(item => item.query === comparison.query);
+    const own = result?.ownUrl ? pageByUrl(pagesMap, result.ownUrl) : bestPageForQuery(pagesMap, comparison.query);
+    if (!own) continue;
+    const query = comparison.query.toLowerCase();
+    if (comparison.page.title.toLowerCase().includes(query) && !own.title.toLowerCase().includes(query)) add('medium', `Title menos explícito que ${comparison.domain}`, `Para “${comparison.query}”, o concorrente usa a expressão no title e a página própria não. Reescreva o title apenas se a expressão descrever exatamente o conteúdo e mantenha-o legível, único e dentro de ~50–60 caracteres/600 px.`, 'Title');
+    const missingTypes = comparison.page.structuredTypes.filter(type => !own.structuredTypes.includes(type));
+    if (missingTypes.length) add('low', `Dados estruturados usados por ${comparison.domain}`, `Na página líder para “${comparison.query}” foram detetados ${missingTypes.join(', ')} que não existem na landing própria. Implemente apenas tipos suportados pelo Google, aplicáveis e coincidentes com conteúdo visível; valide no Rich Results Test.`, 'Schema');
+    if (comparison.page.wordCount > Math.max(400, own.wordCount * 1.5)) add('medium', `Cobertura inferior a ${comparison.domain}`, `A página concorrente observada tem ${comparison.page.wordCount} palavras úteis contra ${own.wordCount}. Não copie nem aumente texto por volume: levante secções, atributos, dúvidas e provas relevantes que o concorrente cobre e a página própria omite.`, 'Conteúdo');
+  }
+  return items.sort((a, b) => priority(a.priority) - priority(b.priority));
+}
+
+function competitorProfiles(serp) {
+  const ignored = new Set([serp.domain, 'google.com', 'youtube.com', 'facebook.com', 'instagram.com', 'pinterest.com', 'wikipedia.org']);
+  const profiles = new Map();
+  for (const result of serp.results) for (const item of result.organic) {
+    if (!item.domain || ignored.has(item.domain) || item.domain.endsWith(`.${serp.domain}`)) continue;
+    const current = profiles.get(item.domain) ?? { domain: item.domain, score: 0, top10: 0, queries: 0, seen: new Set() };
+    current.score += 1 / Math.log2(item.position + 1);
+    current.top10 += item.position <= 10 ? 1 : 0;
+    current.seen.add(result.query);
+    current.queries = current.seen.size;
+    profiles.set(item.domain, current);
+  }
+  return [...profiles.values()].sort((a, b) => b.score - a.score);
+}
+
+function setBars(container, values) {
+  container.replaceChildren();
+  const max = Math.max(...values.map(([, value]) => value), 1);
+  for (const [label, value] of values) {
+    const row = document.createElement('div'); row.className = 'bar';
+    const name = document.createElement('span'); name.textContent = label;
+    const track = document.createElement('span'); track.className = 'track';
+    const fill = document.createElement('i'); fill.style.width = `${value / max * 100}%`; track.append(fill);
+    const count = document.createElement('strong'); count.textContent = Number.isInteger(value) ? value : decimal(value);
+    row.append(name, track, count); container.append(row);
+  }
+}
+
+function sectionTitle(value) { const title = document.createElement('h2'); title.textContent = value; return title; }
+function insight(level, title, detail, label) {
+  const row = document.createElement('article'); row.className = 'insight';
+  const dot = document.createElement('span'); dot.className = `priority ${level}`;
+  const copy = document.createElement('div'); const strong = document.createElement('strong'); strong.textContent = title; const small = document.createElement('small'); small.textContent = detail; copy.append(strong, small);
+  const badge = document.createElement('span'); badge.className = 'position'; badge.textContent = label;
+  row.append(dot, copy, badge); return row;
+}
+function pageByUrl(pagesMap, url) { try { return [...pagesMap.values()].find(page => normalize(page.url) === normalize(url)); } catch { return null; } }
+function bestPageForQuery(pagesMap, query) { const words = query.toLowerCase().split(/\s+/).filter(word => word.length > 3); return uniqueObjects([...pagesMap.values()]).sort((a, b) => scoreText(b, words) - scoreText(a, words))[0]; }
+function scoreText(page, words) { const text = `${page.title} ${page.h1} ${page.url}`.toLowerCase(); return words.filter(word => text.includes(word)).length; }
+function priority(value) { return { high: 0, medium: 1, low: 2 }[value] ?? 3; }
+function compactUrl(value) { try { const url = new URL(value); return `${url.hostname}${url.pathname}`.replace(/\/$/, ''); } catch { return value; } }
+function number(value) { return new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 0 }).format(Number(value) || 0); }
+function decimal(value) { return new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 1 }).format(Number(value) || 0); }
+function percent(value) { return new Intl.NumberFormat('pt-PT', { style: 'percent', maximumFractionDigits: 2 }).format(Number(value) || 0); }
+function escapeCell(value) { return String(value).replaceAll('|', '\\|').replace(/\s+/g, ' '); }
+function escapeRegExp(value) { return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 function addFailures(target, items) {
   for (const item of items ?? []) for (const url of item.urls ?? []) addFailure(target, item.code, url);

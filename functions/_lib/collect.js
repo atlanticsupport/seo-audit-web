@@ -156,6 +156,12 @@ function summarizeResponse(response, page) {
     links: page?.links ?? [],
     hreflang: page?.hreflang ?? [],
     lang: page?.htmlAttrs.lang ?? '',
+    title: page?.titles[0] ?? '',
+    h1: page?.h1[0] ?? '',
+    description: page?.descriptions[0] ?? '',
+    wordCount: page?.wordCount ?? 0,
+    imageCount: page?.images.length ?? 0,
+    structuredTypes: [...(page?.structuredByType.keys() ?? [])],
     fingerprint: page?.visibleText.length > 120 ? page.visibleText.toLowerCase().replace(/\d+/g, '#') : '',
     structured: Boolean(page?.structuredNodes.length)
   };
