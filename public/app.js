@@ -381,7 +381,9 @@ function applySitemapChecks(failures, sitemaps, sitemapUrls, responses, indexabl
 
 function renderLoading(rules, loading = true) {
   results.replaceChildren();
-  document.querySelector('#checks-status').textContent = loading ? 'A analisar' : `${rules.length}`;
+  const checksStatus = document.querySelector('#checks-status');
+  if (loading) showLoader(checksStatus);
+  else checksStatus.textContent = rules.length;
   const rows = new Map();
   const groups = groupBy(rules, rule => rule.category);
   for (const [category, items] of groups) {
@@ -530,18 +532,25 @@ function resetRanking() {
   for (const id of ['opportunities', 'rankings', 'competitors']) {
     const section = document.querySelector(`#${id}`);
     section.replaceChildren();
-    document.querySelector(`#${id}-status`).textContent = 'A analisar';
   }
+  for (const id of ['opportunities-status', 'rankings-status', 'competitors-status', 'ranked-count', 'competitor-count', 'health-copy']) showLoader(document.querySelector(`#${id}`));
   document.querySelector('#rank-bars').replaceChildren();
   document.querySelector('#competitor-bars').replaceChildren();
-  document.querySelector('#ranked-count').textContent = 'A analisar';
-  document.querySelector('#competitor-count').textContent = 'A analisar';
   document.querySelector('#trend-chart polyline').setAttribute('points', '');
   for (const id of ['clicks', 'impressions', 'ctr', 'position']) document.querySelector(`#kpi-${id}`).textContent = '—';
   document.querySelector('#gsc-period').textContent = sessionStorage.getItem('gsc-session') ? 'A carregar' : 'Não ligado';
   document.querySelector('#health-ring').setAttribute('stroke-dasharray', '0 100');
   document.querySelector('#health-donut span').textContent = '—';
-  document.querySelector('#health-copy').textContent = 'A analisar';
+}
+
+function showLoader(element) {
+  const spinner = document.createElement('span');
+  spinner.className = 'indicator loading compact';
+  spinner.setAttribute('aria-hidden', 'true');
+  const label = document.createElement('span');
+  label.className = 'sr-only';
+  label.textContent = 'A analisar';
+  element.replaceChildren(spinner, label);
 }
 
 function showNotice(message, error = false) {
