@@ -7,14 +7,15 @@ export async function onRequestPost({ request, env }) {
     const body = await request.json();
     const queries = [...new Set((body.queries ?? []).map(value => String(value).trim()).filter(Boolean))].slice(0, MAX_QUERIES);
     const domain = hostname(body.domain);
-    const market = ['pt', 'es'].includes(body.market) ? body.market : 'pt';
-    const key = env.SERPER_API_KEY || request.headers.get('x-serper-key');
+    const market = detectedMarket(request);
+    const language = detectedLanguage(request, market);
+    const key = env.SERPER_API_KEY;
     if (!queries.length || !domain) return json({ error: 'Indica o domínio e pelo menos uma pesquisa.' }, 400);
-    if (!key) return json({ error: 'serper_key_required' }, 428);
+    if (!key) return json({ error: 'ranking_not_configured' }, 503);
 
     const results = [];
     for (let offset = 0; offset < queries.length; offset += 5) {
-      results.push(...await Promise.all(queries.slice(offset, offset + 5).map(query => search(query, domain, market, key))));
+      results.push(...await Promise.all(queries.slice(offset, offset + 5).map(query => search(query, domain, market, language, key))));
     }
     return json({ provider: 'Serper', market, domain, generatedAt: new Date().toISOString(), results });
   } catch (error) {
@@ -22,11 +23,11 @@ export async function onRequestPost({ request, env }) {
   }
 }
 
-async function search(query, domain, market, key) {
+async function search(query, domain, market, language, key) {
   const response = await fetch(PROVIDER_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': key },
-    body: JSON.stringify({ q: query, gl: market, hl: market === 'pt' ? 'pt-pt' : 'es', num: 20 })
+    body: JSON.stringify({ q: query, gl: market, hl: language, num: 20 })
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.message || `O fornecedor de ranking respondeu HTTP ${response.status}.`);
@@ -61,6 +62,15 @@ function hostname(value) {
 function safeHostname(value) {
   try { return new URL(value).hostname.replace(/^www\./, '').toLowerCase(); }
   catch { return ''; }
+}
+
+function detectedMarket(request) {
+  const value = String(request.cf?.country ?? request.headers.get('cf-ipcountry') ?? '').toLowerCase();
+  return /^[a-z]{2}$/.test(value) ? value : 'pt';
+}
+
+function detectedLanguage(request, market) {
+  return request.headers.get('accept-language')?.match(/[a-z]{2}/i)?.[0].toLowerCase() ?? market;
 }
 
 function json(body, status = 200) {

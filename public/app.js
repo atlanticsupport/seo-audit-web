@@ -1,13 +1,10 @@
 const form = document.querySelector('#audit-form');
 const input = document.querySelector('#url');
 const button = form.querySelector('.primary');
-const market = document.querySelector('#market');
-const workspace = document.querySelector('#workspace');
 const notice = document.querySelector('#notice');
 const results = document.querySelector('#results');
 const download = document.querySelector('#download-report');
 const gscConnect = document.querySelector('#gsc-connect');
-const serperKey = document.querySelector('#serper-key');
 const rulesPromise = fetch('/supported-rules.json').then(response => response.json());
 const GSC_ORIGIN = 'https://seo-gsc-oauth.support-e04.workers.dev';
 const MAX_PAGES = 50_000;
@@ -26,14 +23,14 @@ if (oauth) {
   history.replaceState(null, '', `${location.pathname}${location.search}`);
 }
 if (sessionStorage.getItem('gsc-session')) {
-  gscConnect.textContent = 'GSC ligado';
   gscConnect.classList.add('connected');
+  gscConnect.title = 'Google Search Console ligado';
+  gscConnect.setAttribute('aria-label', 'Google Search Console ligado');
 }
-if (sessionStorage.getItem('serper-key')) serperKey.value = sessionStorage.getItem('serper-key');
-serperKey.addEventListener('change', () => serperKey.value ? sessionStorage.setItem('serper-key', serperKey.value) : sessionStorage.removeItem('serper-key'));
 gscConnect.addEventListener('click', () => {
   location.href = `${GSC_ORIGIN}/oauth/start?return_to=${encodeURIComponent(`${location.origin}${location.pathname}`)}`;
 });
+rulesPromise.then(rules => { if (!run) renderLoading(rules, false); });
 
 input.addEventListener('input', () => input.setCustomValidity(''));
 
@@ -54,7 +51,6 @@ form.addEventListener('submit', async event => {
   const rows = renderLoading(rules);
   const failures = new Map();
   button.disabled = true;
-  workspace.hidden = false;
   download.hidden = true;
   download.removeAttribute('href');
   resetRanking();
@@ -370,7 +366,7 @@ function applySitemapChecks(failures, sitemaps, sitemapUrls, responses, indexabl
   if (sitemapUrls.size) for (const page of indexable) if (!sitemapUrls.has(normalize(page.url))) addFailure(failures, 'SMP-013', page.url);
 }
 
-function renderLoading(rules) {
+function renderLoading(rules, loading = true) {
   results.replaceChildren();
   const rows = new Map();
   const groups = groupBy(rules, rule => rule.category);
@@ -381,7 +377,7 @@ function renderLoading(rules) {
     const title = document.createElement('strong');
     title.textContent = category;
     const count = document.createElement('small');
-    count.textContent = `${items.length} a verificar`;
+    count.textContent = `${items.length} ${loading ? 'a verificar' : items.length === 1 ? 'verificação' : 'verificações'}`;
     heading.append(title, count);
     const body = document.createElement('div');
     body.className = 'category-body';
@@ -398,8 +394,8 @@ function renderLoading(rules) {
       name.append(code, document.createTextNode(rule.name));
       const indicator = document.createElement('button');
       indicator.type = 'button';
-      indicator.className = 'indicator loading';
-      indicator.setAttribute('aria-label', 'A verificar');
+      indicator.className = `indicator${loading ? ' loading' : ''}`;
+      indicator.setAttribute('aria-label', loading ? 'A verificar' : 'Por analisar');
       row.append(name, indicator, help(rule));
       body.append(row);
       rows.set(rule.code, indicator);
@@ -426,8 +422,8 @@ function finishRows(rows, failures) {
     const indicators = [...group.querySelectorAll('.indicator')];
     const problems = indicators.filter(item => item.classList.contains('fail')).length;
     const optional = indicators.filter(item => item.classList.contains('optional')).length;
-    group.querySelector('summary small').textContent = problems ? `${problems} problemas` : optional ? `${optional} opcionais` : `${indicators.length} certos`;
-    group.open = problems > 0;
+    group.querySelector('summary small').textContent = problems ? `${problems} ${problems === 1 ? 'problema' : 'problemas'}` : optional ? `${optional} ${optional === 1 ? 'opcional' : 'opcionais'}` : `${indicators.length} ${indicators.length === 1 ? 'certo' : 'certos'}`;
+    group.open = false;
   }
 }
 
@@ -517,15 +513,20 @@ function buildReport({ site, pages, pagesMap, rules, failures, limited, gsc, ser
 function resetRanking() {
   for (const id of ['opportunities', 'rankings', 'competitors']) {
     const section = document.querySelector(`#${id}`);
-    section.hidden = true;
-    section.replaceChildren();
+    section.open = false;
+    section.querySelector('.rank-content').replaceChildren();
+    section.querySelector('summary small').textContent = 'A analisar';
   }
   document.querySelector('#rank-bars').replaceChildren();
   document.querySelector('#competitor-bars').replaceChildren();
-  document.querySelector('#ranked-count').textContent = 'Sem pesquisas';
+  document.querySelector('#ranked-count').textContent = 'A analisar';
+  document.querySelector('#competitor-count').textContent = 'A analisar';
   document.querySelector('#trend-chart polyline').setAttribute('points', '');
   for (const id of ['clicks', 'impressions', 'ctr', 'position']) document.querySelector(`#kpi-${id}`).textContent = '—';
-  document.querySelector('#gsc-period').textContent = sessionStorage.getItem('gsc-session') ? 'A carregar' : 'GSC não ligado';
+  document.querySelector('#gsc-period').textContent = sessionStorage.getItem('gsc-session') ? 'A carregar' : 'Não ligado';
+  document.querySelector('#health-donut').style.setProperty('--value', 0);
+  document.querySelector('#health-donut span').textContent = '—';
+  document.querySelector('#health-copy').textContent = 'A analisar';
 }
 
 function showNotice(message, error = false) {
@@ -542,8 +543,9 @@ async function loadGsc(site) {
   const data = await response.json();
   if (response.status === 401) {
     sessionStorage.removeItem('gsc-session');
-    gscConnect.textContent = 'Ligar GSC';
     gscConnect.classList.remove('connected');
+    gscConnect.title = 'Ligar Google Search Console';
+    gscConnect.setAttribute('aria-label', 'Ligar Google Search Console');
   }
   if (!response.ok) throw new Error(data.error || 'Não foi possível ler o Search Console.');
   return data;
@@ -572,11 +574,11 @@ async function loadRankings(site, queries) {
   if (!queries.length) throw new Error('Não foram encontrados termos concretos para acompanhar. Ligue o GSC para usar pesquisas reais.');
   const response = await fetch('/api/rank', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...(serperKey.value ? { 'x-serper-key': serperKey.value } : {}) },
-    body: JSON.stringify({ domain: new URL(site).hostname, market: market.value, queries })
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ domain: new URL(site).hostname, queries })
   });
   const data = await response.json();
-  if (response.status === 428) throw new Error('Adicione uma chave Serper gratuita em ••• para medir posições e concorrentes reais.');
+  if (response.status === 503) throw new Error('O serviço de posições ainda não está configurado no servidor.');
   if (!response.ok) throw new Error(data.error || 'Não foi possível medir as posições.');
   return data;
 }
@@ -610,9 +612,7 @@ function renderGsc(gsc) {
 }
 
 function renderRankings(serp, gsc, comparisons, pagesMap, site) {
-  const rankings = document.querySelector('#rankings');
-  rankings.hidden = false;
-  rankings.append(sectionTitle('Posições reais'));
+  const rankings = rankContent('rankings', `${serp.results.length} pesquisas · ${serp.market.toUpperCase()}`);
   const table = document.createElement('table');
   table.className = 'ranking-table';
   const head = table.createTHead().insertRow();
@@ -648,9 +648,7 @@ function renderRankings(serp, gsc, comparisons, pagesMap, site) {
 }
 
 function renderRankingUnavailable(error, queryCount, gsc, pagesMap, site) {
-  const rankings = document.querySelector('#rankings');
-  rankings.hidden = false;
-  rankings.append(sectionTitle('Posições reais'));
+  const rankings = rankContent('rankings', queryCount ? `${queryCount} termos preparados` : 'Sem termos');
   const message = document.createElement('p');
   message.className = 'notice';
   message.textContent = `${error.message} ${queryCount ? `${queryCount} termos já preparados.` : ''}`.trim();
@@ -658,7 +656,10 @@ function renderRankingUnavailable(error, queryCount, gsc, pagesMap, site) {
   if (gsc) {
     appendGscTable(rankings, gsc);
     renderOpportunities(buildOpportunities(null, gsc, [], pagesMap, site));
-  }
+  } else renderOpportunities([]);
+  rankContent('competitors', 'Não analisado');
+  document.querySelector('#ranked-count').textContent = gsc ? 'Só dados GSC' : 'Não analisado';
+  document.querySelector('#competitor-count').textContent = 'Não analisado';
 }
 
 function appendGscTable(section, gsc) {
@@ -675,9 +676,8 @@ function appendGscTable(section, gsc) {
 }
 
 function renderCompetitors(comparisons, profiles) {
-  const section = document.querySelector('#competitors');
-  section.hidden = false;
-  section.append(sectionTitle('Concorrentes encontrados automaticamente'));
+  const section = rankContent('competitors', `${profiles.length} encontrados`);
+  document.querySelector('#competitor-count').textContent = profiles.length ? `${profiles.length} domínios` : 'Sem dados';
   const list = document.createElement('div');
   list.className = 'insight-list';
   for (const profile of profiles.slice(0, 10)) {
@@ -691,14 +691,21 @@ function renderCompetitors(comparisons, profiles) {
 }
 
 function renderOpportunities(items) {
-  const section = document.querySelector('#opportunities');
-  section.hidden = false;
-  section.append(sectionTitle(`Plano de melhoria (${items.length})`));
+  const section = rankContent('opportunities', items.length ? `${items.length} oportunidades` : 'Sem oportunidades');
   const list = document.createElement('div');
   list.className = 'insight-list';
   for (const item of items.slice(0, 60)) list.append(insight(item.priority, item.title, item.detail, item.label));
   if (!items.length) { const empty = document.createElement('p'); empty.className = 'notice'; empty.textContent = 'Não surgiram oportunidades mensuráveis nos dados ligados.'; list.append(empty); }
   section.append(list);
+}
+
+function rankContent(id, status) {
+  const section = document.querySelector(`#${id}`);
+  section.open = false;
+  section.querySelector('summary small').textContent = status;
+  const content = section.querySelector('.rank-content');
+  content.replaceChildren();
+  return content;
 }
 
 function buildOpportunities(serp, gsc, comparisons, pagesMap, site) {
@@ -722,7 +729,7 @@ function buildOpportunities(serp, gsc, comparisons, pagesMap, site) {
     if (!result.ownPosition) add(row?.impressions >= 20 ? 'high' : 'medium', `Fora do top 20: “${result.query}”`, `Nenhuma página do domínio surgiu nos 20 resultados do mercado ${serp.market.toUpperCase()}. Analise o tipo de página dominante nos concorrentes e crie ou reoriente uma landing única para essa intenção; só depois reforce ligações internas e autoridade externa.`, '>20');
     else if (result.ownPosition >= 11) add('medium', `Página 2: “${result.query}”`, `A página ${compactUrl(result.ownUrl)} está em #${result.ownPosition}. Compare diretamente o seu title, H1, cobertura, schema e formato com os três concorrentes acima e aplique apenas diferenças que respondam melhor à intenção.`, `#${result.ownPosition}`);
     if (result.cannibalization) add('high', `Duas páginas no SERP para “${result.query}”`, `O domínio tem múltiplos resultados orgânicos. Confirme se servem intenções distintas; caso contrário, consolide sinais numa URL principal e atualize links internos/canonical.`, 'Duplicado');
-    if (result.ownUrl && ((market.value === 'pt' && /\/es(?:\/|$)/i.test(result.ownUrl)) || (market.value === 'es' && /\/pt(?:\/|$)/i.test(result.ownUrl)))) add('high', `Idioma errado em “${result.query}”`, `${compactUrl(result.ownUrl)} aparece no mercado ${serp.market.toUpperCase()}. Corrija hreflang recíproco, canonical próprio, linguagem do conteúdo e links internos para que a variante certa receba os sinais.`, 'Localização');
+    if (result.ownUrl && ((serp.market === 'pt' && /\/es(?:\/|$)/i.test(result.ownUrl)) || (serp.market === 'es' && /\/pt(?:\/|$)/i.test(result.ownUrl)))) add('high', `Idioma errado em “${result.query}”`, `${compactUrl(result.ownUrl)} aparece no mercado ${serp.market.toUpperCase()}. Corrija hreflang recíproco, canonical próprio, linguagem do conteúdo e links internos para que a variante certa receba os sinais.`, 'Localização');
   }
 
   for (const comparison of comparisons) {
@@ -767,7 +774,6 @@ function setBars(container, values) {
   }
 }
 
-function sectionTitle(value) { const title = document.createElement('h2'); title.textContent = value; return title; }
 function insight(level, title, detail, label) {
   const row = document.createElement('article'); row.className = 'insight';
   const dot = document.createElement('span'); dot.className = `priority ${level}`;
