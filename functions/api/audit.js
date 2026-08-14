@@ -46,7 +46,7 @@ async function pages(root, urls) {
   if (typeof root !== 'string') throw new Error('URL raiz inválido.');
   const data = await collectPageBatch(root, array(urls));
   const hasHome = data.context.pages.some(page => new URL(page.url).pathname === '/');
-  const results = evaluate(data.context).filter(result => !DEFERRED_CODES.has(result.code) && (!HOME_CODES.has(result.code) || hasHome) && !result.ok);
+  const results = evaluate(data.context, DEFERRED_CODES).filter(result => (!HOME_CODES.has(result.code) || hasHome) && !result.ok);
   const failures = results.map(result => ({ code: result.code, urls: occurrenceUrls(result.code, data) }));
   return {
     summaries: data.summaries,

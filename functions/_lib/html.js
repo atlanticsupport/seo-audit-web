@@ -31,10 +31,14 @@ export function parsePage(response) {
   const cssImages = [...html.matchAll(/(?:background(?:-image)?\s*:|url\()\s*(?:url\()?\s*["']?([^"')\s]+)["']?\)?/gi)]
     .map(match => absolute(match[1], url)).filter(Boolean);
   const jsonLd = scripts.filter(script => /application\/ld\+json/i.test(script.type ?? '')).flatMap(script => parseJsonLd(script.body));
-  const visibleText = text(html
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, ' ')
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, ' ')
-    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript\s*>/gi, ' '));
+  const structuredNodes = flattenStructured(jsonLd);
+  const structuredByType = new Map();
+  for (const node of structuredNodes) for (const type of types(node)) {
+    const entries = structuredByType.get(type);
+    if (entries) entries.push(node);
+    else structuredByType.set(type, [node]);
+  }
+  const visibleText = text(html.replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' '));
 
   return {
     ...response,
@@ -63,7 +67,8 @@ export function parsePage(response) {
     imageUrls,
     cssImages,
     jsonLd,
-    structuredNodes: flattenStructured(jsonLd),
+    structuredNodes,
+    structuredByType,
     visibleText,
     viewport: metas.find(meta => meta.name?.toLowerCase() === 'viewport')?.content ?? '',
     refresh: metas.find(meta => meta['http-equiv']?.toLowerCase() === 'refresh')?.content ?? '',
@@ -84,7 +89,7 @@ export function parsePage(response) {
 }
 
 export function nodesOf(page, type) {
-  return page.structuredNodes.filter(node => types(node).includes(type));
+  return page.structuredByType?.get(type) ?? page.structuredNodes.filter(node => types(node).includes(type));
 }
 
 export function types(node) {

@@ -6,9 +6,10 @@ const TESTS = new Map();
 const add = (codes, test) => codes.forEach(code => TESTS.set(code, test));
 const issueFree = (items, issue, applicable = true) => applicable ? !items.some(issue) : null;
 
-export function evaluate(context) {
+export function evaluate(context, excluded) {
   const results = [];
   for (const rule of RULES) {
+    if (excluded?.has(rule.code)) continue;
     const test = TESTS.get(rule.code);
     if (!test) continue;
     const ok = test(context);
@@ -20,8 +21,8 @@ export function evaluate(context) {
 
 export const supportedCodes = () => [...TESTS.keys()].sort();
 
-const htmlPages = context => context.pages.filter(page => page.isHtml && page.status >= 200 && page.status < 400);
-const indexablePages = context => htmlPages(context).filter(page => !page.robots.includes('noindex'));
+const htmlPages = context => context.htmlPages ??= context.pages.filter(page => page.isHtml && page.status >= 200 && page.status < 400);
+const indexablePages = context => context.indexablePages ??= htmlPages(context).filter(page => !page.robots.includes('noindex'));
 const internalResponses = context => unique([
   ...context.pageResponses.values(),
   ...context.targets.values()
@@ -493,8 +494,9 @@ add(['WST-003'], context => {
 });
 add(['WST-004'], context => {
   const pages = htmlPages(context).filter(page => page.ampStory);
+  if (!pages.length) return null;
   const incoming = incomingLinks(context);
-  return issueFree(pages, page => directive(page, 'noindex') || !incoming.get(normalize(page.url))?.length, pages.length > 0);
+  return issueFree(pages, page => directive(page, 'noindex') || !incoming.get(normalize(page.url))?.length);
 });
 add(['WST-005'], context => {
   const pages = htmlPages(context).filter(page => page.ampStory);
@@ -580,12 +582,17 @@ function hreflangCheck(context, issue) {
 }
 
 function structured(context) {
-  return htmlPages(context).flatMap(page => page.structuredNodes.map(node => ({ node, page })));
+  return context.structuredEntries ??= htmlPages(context).flatMap(page => page.structuredNodes.map(node => ({ node, page })));
+}
+
+function structuredTypes(context) {
+  return context.structuredTypes ??= new Set(structured(context).flatMap(({ node }) => types(node)));
 }
 
 function typeCheck(context, requestedTypes, valid) {
-  const wanted = new Set(values(requestedTypes));
-  const entries = structured(context).filter(({ node }) => types(node).some(type => wanted.has(type)));
+  const wanted = values(requestedTypes);
+  if (!wanted.some(type => structuredTypes(context).has(type))) return null;
+  const entries = structured(context).filter(({ node }) => types(node).some(type => wanted.includes(type)));
   return issueFree(entries, ({ node, page }) => !valid(node, page), entries.length > 0);
 }
 
