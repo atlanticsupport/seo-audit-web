@@ -83,14 +83,17 @@ form.addEventListener('submit', async event => {
     const sitemapItems = await crawlSitemaps(bootstrap.sitemapSeeds, origin, current);
     const sitemapUrls = new Set(sitemapItems.filter(item => item.kind === 'urlset').flatMap(item => item.urls).filter(url => sameOrigin(url, origin) && likelyPage(url)).map(normalize));
     const pageData = await crawlPages(bootstrap.root, origin, sitemapUrls, failures, current);
-    const fetches = await Promise.all([
+    const [resourceFacts, , performance] = await Promise.all([
       inspectResources(pageData.resources, failures, current),
-      inspectExternal(pageData.external, failures, current)
+      inspectExternal(pageData.external, failures, current),
+      loadPerformance(bootstrap.root, pageData.pages).catch(error => ({ error: error.message, pages: [], crux: null }))
     ]);
     ensureCurrent(current);
-    applyGraphChecks(failures, pageData.pages, sitemapItems, sitemapUrls, bootstrap.root, origin, fetches[0]);
+    applyGraphChecks(failures, pageData.pages, sitemapItems, sitemapUrls, bootstrap.root, origin, resourceFacts);
+    applyPerformanceFailures(failures, performance);
     finishRows(rows, failures);
     showSummary(pageData.count, rows.size, failures, pageData.limitReached);
+    renderPerformance(performance);
 
     const gsc = await gscPromise;
     ensureCurrent(current);
@@ -102,17 +105,17 @@ form.addEventListener('submit', async event => {
       serp = await loadRankings(bootstrap.root, queries);
       ensureCurrent(current);
       comparisons = await compareCompetitors(serp, pageData.pages, bootstrap.root, current);
-      renderRankings(serp, gsc.error ? null : gsc, comparisons, pageData.pages, bootstrap.root);
+      renderRankings(serp, gsc.error ? null : gsc, comparisons, pageData.pages, bootstrap.root, performance);
     } catch (error) {
-      renderRankingUnavailable(error, queries.length, gsc.error ? null : gsc, pageData.pages, bootstrap.root);
+      renderRankingUnavailable(error, queries.length, gsc.error ? null : gsc, pageData.pages, bootstrap.root, performance);
     }
-    auditState = { site: bootstrap.root, pages: pageData.count, pagesMap: pageData.pages, rules, failures, limited: pageData.limitReached, gsc: gsc.error ? null : gsc, serp, comparisons };
+    auditState = { site: bootstrap.root, pages: pageData.count, pagesMap: pageData.pages, rules, failures, limited: pageData.limitReached, gsc: gsc.error ? null : gsc, serp, comparisons, performance };
     if (reportUrl) URL.revokeObjectURL(reportUrl);
     reportUrl = URL.createObjectURL(new Blob([buildReport(auditState)], { type: 'text/markdown;charset=utf-8' }));
     download.href = reportUrl;
     download.download = `seo-audit-${new URL(bootstrap.root).hostname}-${new Date().toISOString().slice(0, 10)}.md`;
     download.hidden = false;
-    const suffix = [gsc.error && 'GSC não ligado', !serp && 'ranking sem fornecedor'].filter(Boolean).join(' · ');
+    const suffix = [gsc.error && 'GSC não ligado', !serp && 'ranking sem fornecedor', performance.error && 'PageSpeed indisponível'].filter(Boolean).join(' · ');
     showNotice(`Auditoria concluída${suffix ? ` · ${suffix}` : ''}.`);
   } catch (error) {
     if (current === run) {
@@ -189,6 +192,36 @@ async function crawlPages(root, origin, sitemapUrls, failures, current) {
     }
   }));
   return { pages, external, resources, count: uniqueObjects([...pages.values()]).length, limitReached: queue.length > 0 || sitemapUrls.size + 1 > MAX_PAGES };
+}
+
+async function loadPerformance(root, pagesMap) {
+  return post({ action: 'performance', root, urls: performanceTargets(root, pagesMap) }, 1);
+}
+
+function performanceTargets(root, pagesMap) {
+  const targets = [normalize(root)];
+  const group = value => {
+    const parts = new URL(value).pathname.split('/').filter(Boolean);
+    return /^[a-z]{2}(?:-[a-z]{2})?$/i.test(parts[0] ?? '') ? parts.slice(0, 2).join('/') : parts[0] ?? '/';
+  };
+  const groups = new Set([group(root)]);
+  for (const page of uniqueObjects([...pagesMap.values()]).filter(item => item.status >= 200 && item.status < 300)) {
+    const section = group(page.url);
+    if (groups.has(section)) continue;
+    groups.add(section);
+    targets.push(normalize(page.url));
+    if (targets.length === 3) break;
+  }
+  return targets;
+}
+
+function applyPerformanceFailures(failures, performance) {
+  const auditCodes = { 'font-size': 'UXP-004', 'uses-text-compression': 'UXP-006', viewport: 'UXP-013' };
+  for (const page of performance?.pages ?? []) {
+    if (page.error) continue;
+    if (page.score < 90) addFailure(failures, 'UXP-001', page.url);
+    for (const audit of page.audits) if (auditCodes[audit.id]) addFailure(failures, auditCodes[audit.id], page.url);
+  }
 }
 
 async function inspectResources(resources, failures, current) {
@@ -509,7 +542,7 @@ function showSummary(pages, total, failures, limited) {
   document.querySelector('#checks-status').textContent = problems ? `${problems} problemas` : optional ? `${optional} opcionais` : 'Tudo certo';
 }
 
-function buildReport({ site, pages, pagesMap, rules, failures, limited, gsc, serp, comparisons }) {
+function buildReport({ site, pages, pagesMap, rules, failures, limited, gsc, serp, comparisons, performance }) {
   const findings = rules.flatMap(rule => {
     const urls = [...(failures.get(rule.code) ?? [])].sort();
     return urls.length ? [{ rule, urls }] : [];
@@ -531,13 +564,22 @@ function buildReport({ site, pages, pagesMap, rules, failures, limited, gsc, ser
       `period: ${gsc.currentPeriod.startDate}/${gsc.currentPeriod.endDate}`,
       `metrics: clicks=${row.clicks}; impressions=${row.impressions}; ctr=${row.ctr}; avg_position=${row.position}`);
   }
+  if (performance) {
+    const measured = performance.pages?.filter(page => !page.error) ?? [];
+    lines.push('', '## PAGESPEED', 'url\tstrategy\tscore\tseo\tfcp_ms\tlcp_ms\ttbt_ms\tcls\tspeed_index_ms',
+      ...measured.map(page => `${page.url}\t${page.strategy}\t${page.score}\t${page.seoScore}\t${Math.round(page.metrics.fcpMs)}\t${Math.round(page.metrics.lcpMs)}\t${Math.round(page.metrics.tbtMs)}\t${page.metrics.cls}\t${Math.round(page.metrics.speedIndexMs)}`));
+    const audits = measured.flatMap(page => page.audits.map(audit => `${page.url}\t${page.strategy}\t${audit.id}\t${audit.score}\t${clean(audit.display) || '-'}\t${audit.resources.join(';') || '-'}`));
+    if (audits.length) lines.push('', '## LIGHTHOUSE_FINDINGS', 'url\tstrategy\taudit\tscore\tmeasurement\tresources', ...audits);
+    if (performance.crux?.metrics) lines.push('', '## CRUX_PHONE', `period: ${performance.crux.period}`, 'metric\tp75\tdistribution_good_needs_poor',
+      ...Object.entries(performance.crux.metrics).map(([metric, value]) => `${metric}\t${value.p75}\t${value.distribution.join(',')}`));
+  }
   if (serp) {
     const profiles = competitorProfiles(serp);
     lines.push('', '## RANKINGS', 'query\tposition\turl', ...serp.results.map(item => `${clean(item.query)}\t${item.ownPosition ?? 'GT20'}\t${item.ownUrl || '-'}`));
     lines.push('', '## COMPETITORS', 'domain\tvisibility\ttop10\tqueries', ...profiles.slice(0, 15).map(item => `${item.domain}\t${decimal(item.score)}\t${item.top10}\t${item.queries}`));
   }
-  if (serp || gsc) {
-    const opportunities = buildOpportunities(serp, gsc, comparisons, pagesMap, site).slice(0, 60);
+  if (serp || gsc || performance) {
+    const opportunities = buildOpportunities(serp, gsc, comparisons, pagesMap, site, performance).slice(0, 60);
     lines.push('', '## ACTIONS', 'priority\tsignal\taction\tevidence_or_fix', ...opportunities.map(item => `${item.priority}\t${clean(item.label) || '-'}\t${clean(item.title)}\t${clean(item.detail)}`));
   }
   if (urls.length) lines.push('', '## URLS', 'id\turl', ...urls.map(url => `${urlIds.get(url)}\t${url}`));
@@ -557,14 +599,30 @@ function resetRanking() {
     const section = document.querySelector(`#${id}`);
     section.replaceChildren();
   }
-  for (const id of ['opportunities-status', 'rankings-status', 'competitors-status', 'ranked-count', 'competitor-count', 'health-copy']) showLoader(document.querySelector(`#${id}`));
+  for (const id of ['opportunities-status', 'rankings-status', 'competitors-status', 'ranked-count', 'competitor-count', 'health-copy', 'pagespeed-status']) showLoader(document.querySelector(`#${id}`));
   document.querySelector('#rank-bars').replaceChildren();
   document.querySelector('#competitor-bars').replaceChildren();
   document.querySelector('#trend-chart polyline').setAttribute('points', '');
   for (const id of ['clicks', 'impressions', 'ctr', 'position']) document.querySelector(`#kpi-${id}`).textContent = '—';
+  for (const id of ['psi-mobile', 'psi-desktop', 'crux-lcp', 'crux-inp', 'crux-cls']) document.querySelector(`#${id}`).textContent = '—';
   document.querySelector('#gsc-period').textContent = sessionStorage.getItem('gsc-session') ? 'A carregar' : 'Não ligado';
   document.querySelector('#health-ring').setAttribute('stroke-dasharray', '0 100');
   document.querySelector('#health-donut span').textContent = '—';
+}
+
+function renderPerformance(performance) {
+  const pages = performance?.pages?.filter(page => !page.error) ?? [];
+  const mobile = pages.find(page => page.strategy === 'mobile');
+  const desktop = pages.find(page => page.strategy === 'desktop');
+  const metrics = performance?.crux?.metrics ?? {};
+  document.querySelector('#psi-mobile').textContent = mobile?.score ?? '—';
+  document.querySelector('#psi-desktop').textContent = desktop?.score ?? '—';
+  document.querySelector('#crux-lcp').textContent = metrics.lcpMs ? `${decimal(metrics.lcpMs.p75 / 1000)} s` : '—';
+  document.querySelector('#crux-inp').textContent = metrics.inpMs ? `${number(metrics.inpMs.p75)} ms` : '—';
+  document.querySelector('#crux-cls').textContent = metrics.cls ? decimal(metrics.cls.p75) : '—';
+  const urls = new Set(pages.map(page => page.url)).size;
+  const failed = (performance?.pages ?? []).filter(page => page.error).length;
+  document.querySelector('#pagespeed-status').textContent = performance?.error ? 'Indisponível' : `${urls} URLs${failed ? ` · ${failed} falhas` : ''}${performance?.crux ? '' : ' · sem CrUX'}`;
 }
 
 function showLoader(element) {
@@ -671,7 +729,7 @@ function renderGsc(gsc) {
   document.querySelector('#trend-chart polyline').setAttribute('points', points);
 }
 
-function renderRankings(serp, gsc, comparisons, pagesMap, site) {
+function renderRankings(serp, gsc, comparisons, pagesMap, site, performance) {
   const rankings = rankContent('rankings', `${serp.results.length} pesquisas · ${serp.market.toUpperCase()}`);
   const table = document.createElement('table');
   table.className = 'ranking-table';
@@ -704,10 +762,10 @@ function renderRankings(serp, gsc, comparisons, pagesMap, site) {
   const profiles = competitorProfiles(serp);
   setBars(document.querySelector('#competitor-bars'), profiles.slice(0, 8).map(item => [item.domain, item.score]));
   renderCompetitors(comparisons, profiles);
-  renderOpportunities(buildOpportunities(serp, gsc, comparisons, pagesMap, site));
+  renderOpportunities(buildOpportunities(serp, gsc, comparisons, pagesMap, site, performance));
 }
 
-function renderRankingUnavailable(error, queryCount, gsc, pagesMap, site) {
+function renderRankingUnavailable(error, queryCount, gsc, pagesMap, site, performance) {
   const rankings = rankContent('rankings', queryCount ? `${queryCount} termos preparados` : 'Sem termos');
   const message = document.createElement('p');
   message.className = 'notice';
@@ -715,8 +773,8 @@ function renderRankingUnavailable(error, queryCount, gsc, pagesMap, site) {
   rankings.append(message);
   if (gsc) {
     appendGscTable(rankings, gsc);
-    renderOpportunities(buildOpportunities(null, gsc, [], pagesMap, site));
-  } else renderOpportunities([]);
+    renderOpportunities(buildOpportunities(null, gsc, [], pagesMap, site, performance));
+  } else renderOpportunities(buildOpportunities(null, null, [], pagesMap, site, performance));
   rankContent('competitors', 'Não analisado');
   document.querySelector('#ranked-count').textContent = gsc ? 'Só dados GSC' : 'Não analisado';
   document.querySelector('#competitor-count').textContent = 'Não analisado';
@@ -777,7 +835,7 @@ function switchView(id) {
   viewContent.scrollTop = 0;
 }
 
-function buildOpportunities(serp, gsc, comparisons, pagesMap, site) {
+function buildOpportunities(serp, gsc, comparisons, pagesMap, site, performance) {
   const items = [];
   const add = (priority, title, detail, label = '') => items.push({ priority, title, detail, label });
   const queryRows = new Map((gsc?.queries ?? []).map(row => [row.keys[0].toLowerCase(), row]));
@@ -811,6 +869,18 @@ function buildOpportunities(serp, gsc, comparisons, pagesMap, site) {
     const missingTypes = comparison.page.structuredTypes.filter(type => !own.structuredTypes.includes(type));
     if (missingTypes.length) add('low', `Dados estruturados usados por ${comparison.domain}`, `Na página líder para “${comparison.query}” foram detetados ${missingTypes.join(', ')} que não existem na landing própria. Implemente apenas tipos suportados pelo Google, aplicáveis e coincidentes com conteúdo visível; valide no Rich Results Test.`, 'Schema');
     if (comparison.page.wordCount > Math.max(400, own.wordCount * 1.5)) add('medium', `Cobertura inferior a ${comparison.domain}`, `A página concorrente observada tem ${comparison.page.wordCount} palavras úteis contra ${own.wordCount}. Não copie nem aumente texto por volume: levante secções, atributos, dúvidas e provas relevantes que o concorrente cobre e a página própria omite.`, 'Conteúdo');
+  }
+  for (const page of performance?.pages ?? []) {
+    if (page.error) continue;
+    const device = page.strategy === 'mobile' ? 'Mobile' : 'Desktop';
+    if (page.metrics.lcpMs > 2_500) add(page.metrics.lcpMs > 4_000 ? 'high' : 'medium', `LCP laboratorial lento em ${device}`, `${compactUrl(page.url)}: ${decimal(page.metrics.lcpMs / 1000)} s. Priorize o elemento LCP, a descoberta do recurso, TTFB, compressão e bloqueios de renderização indicados pelo Lighthouse.`, 'LCP');
+    if (page.metrics.tbtMs > 200) add(page.metrics.tbtMs > 600 ? 'high' : 'medium', `Bloqueio da main thread em ${device}`, `${compactUrl(page.url)}: TBT ${number(page.metrics.tbtMs)} ms. Reduza JavaScript executado no carregamento, tarefas longas e scripts terceiros não essenciais.`, 'TBT');
+    if (page.metrics.cls > .1) add(page.metrics.cls > .25 ? 'high' : 'medium', `Instabilidade visual em ${device}`, `${compactUrl(page.url)}: CLS ${decimal(page.metrics.cls)}. Reserve dimensões para imagens/embeds e evite inserir conteúdo acima do conteúdo já renderizado.`, 'CLS');
+    for (const audit of page.audits.slice(0, 6)) add(audit.score < 50 ? 'high' : 'medium', `PageSpeed: ${audit.title}`, `${device} · ${compactUrl(page.url)}${audit.display ? ` · ${audit.display}` : ''}${audit.resources.length ? ` · ${audit.resources.slice(0, 2).join('; ')}` : ''}`, `${audit.score}/100`);
+  }
+  for (const [metric, good, poor, label, unit] of [['lcpMs', 2_500, 4_000, 'LCP real', 'ms'], ['inpMs', 200, 500, 'INP real', 'ms'], ['cls', .1, .25, 'CLS real', '']]) {
+    const value = performance?.crux?.metrics?.[metric]?.p75;
+    if (value > good) add(value > poor ? 'high' : 'medium', `${label} acima do recomendado`, `CrUX PHONE p75: ${value}${unit}. Este é desempenho real agregado dos últimos 28 dias; corrigir os templates e recursos que afetam a maioria das visitas.`, 'CrUX');
   }
   return items.sort((a, b) => priority(a.priority) - priority(b.priority));
 }
@@ -888,9 +958,9 @@ function mergeResource(target, item) {
   target.set(key, current);
 }
 
-async function post(body) {
+async function post(body, attempts = 3) {
   let lastError;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       const response = await fetch('/api/audit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       const text = await response.text();
@@ -901,7 +971,7 @@ async function post(body) {
       return data;
     } catch (error) {
       lastError = error;
-      if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 350 * 2 ** attempt));
+      if (attempt < attempts - 1) await new Promise(resolve => setTimeout(resolve, 350 * 2 ** attempt));
     }
   }
   throw lastError;

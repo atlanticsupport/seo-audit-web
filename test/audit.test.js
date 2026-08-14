@@ -78,6 +78,46 @@ test('bootstrap devolve JSON sem analisar novamente o HTML completo', async t =>
   assert.deepEqual(data.failures.map(item => item.code), ['AIX-003', 'AIX-005']);
 });
 
+test('PageSpeed usa a chave do servidor e devolve Lighthouse compacto', async t => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async input => {
+    const url = String(input);
+    assert.match(url, /key=server-key/);
+    if (url.includes('chromeuxreport')) return Response.json({ error: { message: 'not found' } }, { status: 404 });
+    return Response.json({ lighthouseResult: {
+      finalUrl: 'https://example.com/', fetchTime: '2026-08-14T12:00:00Z',
+      categories: { performance: { score: .72, auditRefs: [{ id: 'render-blocking-insight', group: 'insights' }] }, seo: { score: 1 } },
+      audits: {
+        'first-contentful-paint': { numericValue: 2_000 }, 'largest-contentful-paint': { numericValue: 4_200 },
+        'total-blocking-time': { numericValue: 300 }, 'cumulative-layout-shift': { numericValue: .12 }, 'speed-index': { numericValue: 3_000 },
+        'render-blocking-insight': { id: 'render-blocking-insight', title: 'Render blocking', score: 0, displayValue: '1,200 ms', details: { items: [{ url: 'https://example.com/app.css', wastedMs: 1_200 }] } }
+      }
+    } });
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const request = new Request('https://audit.test/api/audit', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'performance', root: 'https://example.com/', urls: ['https://example.com/'] })
+  });
+  const response = await onRequest({ request, env: { GOOGLE_API_KEY: 'server-key' } });
+  const data = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(data.pages.length, 2);
+  assert.equal(data.pages[0].score, 72);
+  assert.equal(data.pages[0].metrics.lcpMs, 4_200);
+  assert.deepEqual(data.pages[0].audits[0], { id: 'render-blocking-insight', title: 'Render blocking', score: 0, display: '1,200 ms', resources: ['https://example.com/app.css (wastedMs=1200)'] });
+  assert.equal(data.crux, null);
+});
+
+test('PageSpeed recusa execução sem chave no servidor', async () => {
+  const request = new Request('https://audit.test/api/audit', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'performance', root: 'https://example.com/', urls: ['https://example.com/'] })
+  });
+  assert.equal((await onRequest({ request, env: {} })).status, 503);
+});
+
 test('fixture válida e mutações mínimas produzem resultados distintos', () => {
   const valid = page(`<!doctype html><html lang="pt"><head>
     <title>Auditoria SEO técnica completa para aplicações modernas</title>

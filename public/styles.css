@@ -74,6 +74,7 @@ input:focus { border-color:#111; box-shadow:0 0 0 3px #eee; }
 .panel-title { display:flex; justify-content:space-between; align-items:start; gap:16px; }
 .panel-title small { text-align:right; }
 .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px; }
+.performance-kpis { grid-template-columns:repeat(5,1fr); }
 .kpis div { min-width:0; }
 .kpis span { display:block; overflow:hidden; font-size:17px; font-weight:720; text-overflow:ellipsis; }
 .kpis small { display:block; margin-top:3px; color:#999; font-size:9px; }
