@@ -5,6 +5,8 @@ const notice = document.querySelector('#notice');
 const results = document.querySelector('#results');
 const download = document.querySelector('#download-report');
 const gscConnect = document.querySelector('#gsc-connect');
+const viewContent = document.querySelector('.view-content');
+const viewTabs = [...document.querySelectorAll('.view-tab')];
 const rulesPromise = fetch('/supported-rules.json').then(response => response.json());
 const GSC_ORIGIN = 'https://seo-gsc-oauth.support-e04.workers.dev';
 const MAX_PAGES = 50_000;
@@ -16,6 +18,17 @@ const OPTIONAL_CODES = new Set(['PRD-002', 'PRD-003']);
 let run = 0;
 let reportUrl = '';
 let auditState = {};
+
+for (const tab of viewTabs) tab.addEventListener('click', () => switchView(tab.dataset.view));
+document.querySelector('.view-tabs').addEventListener('keydown', event => {
+  if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+  event.preventDefault();
+  const current = viewTabs.findIndex(tab => tab.classList.contains('active'));
+  const next = (current + (event.key === 'ArrowRight' ? 1 : -1) + viewTabs.length) % viewTabs.length;
+  switchView(viewTabs[next].dataset.view);
+  viewTabs[next].focus();
+});
+switchView('checks');
 
 const oauth = new URLSearchParams(location.hash.slice(1)).get('gsc');
 if (oauth) {
@@ -368,12 +381,14 @@ function applySitemapChecks(failures, sitemaps, sitemapUrls, responses, indexabl
 
 function renderLoading(rules, loading = true) {
   results.replaceChildren();
+  document.querySelector('#checks-status').textContent = loading ? 'A analisar' : `${rules.length}`;
   const rows = new Map();
   const groups = groupBy(rules, rule => rule.category);
   for (const [category, items] of groups) {
-    const group = document.createElement('details');
-    group.className = 'category-group';
-    const heading = document.createElement('summary');
+    const group = document.createElement('section');
+    group.className = 'category-section';
+    const heading = document.createElement('div');
+    heading.className = 'category-heading';
     const title = document.createElement('strong');
     title.textContent = category;
     const count = document.createElement('small');
@@ -418,12 +433,11 @@ function finishRows(rows, failures) {
       indicator.append(tooltip);
     }
   }
-  for (const group of results.querySelectorAll('.category-group')) {
+  for (const group of results.querySelectorAll('.category-section')) {
     const indicators = [...group.querySelectorAll('.indicator')];
     const problems = indicators.filter(item => item.classList.contains('fail')).length;
     const optional = indicators.filter(item => item.classList.contains('optional')).length;
-    group.querySelector('summary small').textContent = problems ? `${problems} ${problems === 1 ? 'problema' : 'problemas'}` : optional ? `${optional} ${optional === 1 ? 'opcional' : 'opcionais'}` : `${indicators.length} ${indicators.length === 1 ? 'certo' : 'certos'}`;
-    group.open = false;
+    group.querySelector('.category-heading small').textContent = problems ? `${problems} ${problems === 1 ? 'problema' : 'problemas'}` : optional ? `${optional} ${optional === 1 ? 'opcional' : 'opcionais'}` : `${indicators.length} ${indicators.length === 1 ? 'certo' : 'certos'}`;
   }
 }
 
@@ -432,6 +446,7 @@ function stopRows(rows) {
     indicator.className = 'indicator';
     indicator.setAttribute('aria-label', 'Não verificado');
   }
+  document.querySelector('#checks-status').textContent = 'Interrompido';
 }
 
 function help(rule) {
@@ -463,6 +478,7 @@ function showSummary(pages, total, failures, limited) {
   donut.style.setProperty('--value', score);
   donut.querySelector('span').textContent = score;
   document.querySelector('#health-copy').textContent = `${pages} páginas · ${problems} problemas · ${optional} opcionais${limited ? ' · limite atingido' : ''}`;
+  document.querySelector('#checks-status').textContent = problems ? `${problems} problemas` : optional ? `${optional} opcionais` : 'Tudo certo';
 }
 
 function buildReport({ site, pages, pagesMap, rules, failures, limited, gsc, serp, comparisons }) {
@@ -513,9 +529,8 @@ function buildReport({ site, pages, pagesMap, rules, failures, limited, gsc, ser
 function resetRanking() {
   for (const id of ['opportunities', 'rankings', 'competitors']) {
     const section = document.querySelector(`#${id}`);
-    section.open = false;
-    section.querySelector('.rank-content').replaceChildren();
-    section.querySelector('summary small').textContent = 'A analisar';
+    section.replaceChildren();
+    document.querySelector(`#${id}-status`).textContent = 'A analisar';
   }
   document.querySelector('#rank-bars').replaceChildren();
   document.querySelector('#competitor-bars').replaceChildren();
@@ -701,11 +716,20 @@ function renderOpportunities(items) {
 
 function rankContent(id, status) {
   const section = document.querySelector(`#${id}`);
-  section.open = false;
-  section.querySelector('summary small').textContent = status;
-  const content = section.querySelector('.rank-content');
-  content.replaceChildren();
-  return content;
+  document.querySelector(`#${id}-status`).textContent = status;
+  section.replaceChildren();
+  return section;
+}
+
+function switchView(id) {
+  for (const tab of viewTabs) {
+    const selected = tab.dataset.view === id;
+    tab.classList.toggle('active', selected);
+    tab.setAttribute('aria-selected', selected);
+    tab.tabIndex = selected ? 0 : -1;
+  }
+  for (const pane of document.querySelectorAll('.view-pane')) pane.hidden = pane.id !== id;
+  viewContent.scrollTop = 0;
 }
 
 function buildOpportunities(serp, gsc, comparisons, pagesMap, site) {

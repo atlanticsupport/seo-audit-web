@@ -28,12 +28,20 @@
 
     <p id="notice" class="notice" aria-live="polite" hidden></p>
     <div id="workspace" class="workspace">
-      <div class="content">
-        <details id="opportunities" class="rank-section"><summary><strong>Plano de melhoria</strong><small>Por analisar</small></summary><div class="rank-content"></div></details>
-        <details id="rankings" class="rank-section"><summary><strong>Posições</strong><small>Por analisar</small></summary><div class="rank-content"></div></details>
-        <details id="competitors" class="rank-section"><summary><strong>Concorrentes</strong><small>Por analisar</small></summary><div class="rank-content"></div></details>
-        <section id="results" class="results" aria-label="Resultados técnicos"></section>
-      </div>
+      <section class="data-panel" aria-label="Resultados da auditoria">
+        <nav class="view-tabs" role="tablist" aria-label="Vistas dos resultados">
+          <button class="view-tab active" type="button" role="tab" aria-selected="true" aria-controls="checks" data-view="checks">Checks <small id="checks-status">—</small></button>
+          <button class="view-tab" type="button" role="tab" aria-selected="false" aria-controls="opportunities" data-view="opportunities">Melhorias <small id="opportunities-status">—</small></button>
+          <button class="view-tab" type="button" role="tab" aria-selected="false" aria-controls="rankings" data-view="rankings">Posições <small id="rankings-status">—</small></button>
+          <button class="view-tab" type="button" role="tab" aria-selected="false" aria-controls="competitors" data-view="competitors">Concorrentes <small id="competitors-status">—</small></button>
+        </nav>
+        <div class="view-content">
+          <section id="checks" class="view-pane active" role="tabpanel"><div id="results" class="results" aria-label="Resultados técnicos"></div></section>
+          <section id="opportunities" class="view-pane" role="tabpanel" hidden></section>
+          <section id="rankings" class="view-pane" role="tabpanel" hidden></section>
+          <section id="competitors" class="view-pane" role="tabpanel" hidden></section>
+        </div>
+      </section>
 
       <aside class="dashboard" aria-label="Resumo visual">
         <section class="panel health-panel">
