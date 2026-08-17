@@ -2,21 +2,22 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { onRequest } from '../functions/api/audit.js';
+import { parseSitemap } from '../functions/_lib/collect.js';
 import { parsePage } from '../functions/_lib/html.js';
 import { publicUrl } from '../functions/_lib/net.js';
 import { evaluate, supportedCodes } from '../functions/_lib/evaluate.js';
 import { RULES } from '../functions/_lib/rules.generated.js';
 
-test('o registo contém 288 problemas diretos e 273 detetores executáveis neste runtime', () => {
-  assert.equal(RULES.length, 288);
-  assert.equal(new Set(RULES.map(rule => rule.code)).size, 288);
-  assert.equal(supportedCodes().length, 273);
+test('o registo contém 290 problemas diretos e 275 detetores executáveis neste runtime', () => {
+  assert.equal(RULES.length, 290);
+  assert.equal(new Set(RULES.map(rule => rule.code)).size, 290);
+  assert.equal(supportedCodes().length, 275);
   assert.ok(supportedCodes().every(code => RULES.some(rule => rule.code === code)));
 });
 
-test('a interface recebe apenas as 273 regras com detetor', async () => {
+test('a interface recebe apenas as 275 regras com detetor', async () => {
   const rules = JSON.parse(await readFile(new URL('../public/supported-rules.json', import.meta.url), 'utf8'));
-  assert.equal(rules.length, 273);
+  assert.equal(rules.length, 275);
   assert.deepEqual(rules.map(rule => rule.code).sort(), supportedCodes());
 });
 
@@ -155,9 +156,40 @@ test('fixture válida e mutações mínimas produzem resultados distintos', () =
   assert.equal(conflicting.get('LOC-008'), false);
 });
 
-function page(text) {
+test('sitemaps XML, RSS, Atom e texto são aceites', () => {
+  const response = (text, contentType = 'application/xml') => ({
+    requestedUrl: 'https://example.com/sitemap', finalUrl: 'https://example.com/sitemap', status: 200,
+    headers: { 'content-type': contentType }, contentType, contentLength: text.length, bytes: new TextEncoder().encode(text),
+    text, truncated: false, redirects: [], elapsedMs: 1, error: ''
+  });
+  const samples = [
+    ['sitemap.xml', '<urlset><url><loc>https://example.com/xml</loc></url></urlset>', 'application/xml', 'urlset'],
+    ['feed.rss', '<rss><channel><item><link>https://example.com/rss</link></item></channel></rss>', 'application/rss+xml', 'rss'],
+    ['feed.atom', '<feed><entry><link href="https://example.com/atom"/></entry></feed>', 'application/atom+xml', 'atom'],
+    ['sitemap.txt', 'https://example.com/text\nhttps://example.com/second', 'text/plain', 'text']
+  ];
+  for (const [name, source, type, kind] of samples) {
+    const sitemap = parseSitemap(`https://example.com/${name}`, response(source, type));
+    assert.equal(sitemap.kind, kind);
+    assert.equal(sitemap.syntaxError, false);
+    assert.ok(sitemap.urls.length > 0);
+  }
+  assert.equal(parseSitemap('https://example.com/sitemap.xml', response('<html>erro</html>', 'text/html')).kind, 'invalid');
+});
+
+test('navegação facetada deteta parâmetros repetidos e ordenação instável', () => {
+  assert.equal(resultMap(context(page('<html lang="pt"><body>Produto</body></html>', 'https://example.com/produto?cor=azul&cor=azul'))).get('FAC-001'), false);
+  const first = page('<html lang="pt"><body>Produto</body></html>', 'https://example.com/produto?cor=azul&tamanho=m');
+  const second = page('<html lang="pt"><body>Produto</body></html>', 'https://example.com/produto?tamanho=m&cor=azul');
+  const value = context(first);
+  value.pages = [first, second];
+  value.pageResponses = new Map(value.pages.map(item => [item.url, item]));
+  assert.equal(resultMap(value).get('FAC-002'), false);
+});
+
+function page(text, url = 'https://example.com/') {
   return parsePage({
-    requestedUrl: 'https://example.com/', finalUrl: 'https://example.com/', status: 200,
+    requestedUrl: url, finalUrl: url, status: 200,
     headers: { 'content-type': 'text/html', 'content-encoding': 'gzip' }, contentType: 'text/html',
     contentLength: new TextEncoder().encode(text).length, bytes: new TextEncoder().encode(text), text,
     truncated: false, redirects: [], elapsedMs: 80, error: ''

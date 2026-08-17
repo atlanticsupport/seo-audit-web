@@ -81,7 +81,7 @@ form.addEventListener('submit', async event => {
     const origin = bootstrap.origin;
     const gscPromise = loadGsc(bootstrap.root).catch(error => ({ error: error.message }));
     const sitemapItems = await crawlSitemaps(bootstrap.sitemapSeeds, origin, current);
-    const sitemapUrls = new Set(sitemapItems.filter(item => item.kind === 'urlset').flatMap(item => item.urls).filter(url => sameOrigin(url, origin) && likelyPage(url)).map(normalize));
+    const sitemapUrls = new Set(sitemapItems.filter(item => !['index', 'invalid'].includes(item.kind)).flatMap(item => item.urls).filter(url => sameOrigin(url, origin) && likelyPage(url)).map(normalize));
     const pageData = await crawlPages(bootstrap.root, origin, sitemapUrls, failures, current);
     const [resourceFacts, , performance] = await Promise.all([
       inspectResources(pageData.resources, failures, current),
@@ -340,6 +340,7 @@ function applyGraphChecks(failures, pagesMap, sitemaps, sitemapUrls, root, origi
   for (const url of new Set(indexable.flatMap(page => page.canonical.map(normalize)))) if (!(incoming.get(url)?.length)) addFailure(failures, 'LNK-001', url);
   applyCanonicalChecks(failures, indexable, responses);
   applyDuplicateChecks(failures, indexable);
+  applyFacetChecks(failures, pages);
   applyHreflangChecks(failures, pages, responses);
   applySitemapChecks(failures, sitemaps, sitemapUrls, responses, indexable);
 }
@@ -360,6 +361,11 @@ function applyDuplicateChecks(failures, pages) {
     for (const page of duplicates.filter(item => !item.canonical.length)) addMany(failures, ['DUP-001', 'AIX-015'], [page.url]);
     if (duplicates.some(page => page.structured) && duplicates.some(page => !page.structured)) for (const page of duplicates.filter(item => !item.structured)) addFailure(failures, 'SDG-005', page.url);
   }
+}
+
+function applyFacetChecks(failures, pages) {
+  const groups = groupBy(pages.filter(page => new URL(page.url).search), page => querySignature(page.url));
+  for (const items of groups.values()) if (new Set(items.map(page => new URL(page.url).search)).size > 1) for (const page of items) addFailure(failures, 'FAC-002', page.url);
 }
 
 function applyHreflangChecks(failures, pages, responses) {
@@ -395,7 +401,7 @@ function applySitemapChecks(failures, sitemaps, sitemapUrls, responses, indexabl
     if (sitemap.contentLength > 52_428_800) addFailure(failures, 'SMP-009', sitemap.url);
     if (!sitemap.truncated && sitemap.urls.length > 50_000) addFailure(failures, 'SMP-010', sitemap.url);
     if (sitemap.status === 200 && sitemap.kind === 'invalid') addFailure(failures, 'SMP-011', sitemap.url);
-    if (sitemap.kind === 'urlset') for (const url of sitemap.urls) {
+    if (!['index', 'invalid'].includes(sitemap.kind)) for (const url of sitemap.urls) {
       const key = normalize(url);
       membership.set(key, (membership.get(key) ?? 0) + 1);
       if (!sitemapScope(url, sitemap.url)) addFailure(failures, 'SMP-012', sitemap.url);
@@ -990,6 +996,11 @@ function normalize(value) {
   const url = new URL(value);
   url.hash = '';
   return url.href;
+}
+
+function querySignature(value) {
+  const url = new URL(value);
+  return `${url.origin}${url.pathname}?${[...url.searchParams].sort(([aKey, aValue], [bKey, bValue]) => aKey.localeCompare(bKey) || aValue.localeCompare(bValue)).map(([key, item]) => `${encodeURIComponent(key)}=${encodeURIComponent(item)}`).join('&')}`;
 }
 
 function sameOrigin(value, origin) {

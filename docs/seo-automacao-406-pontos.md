@@ -1,29 +1,29 @@
-# Matriz de automatização dos 406 pontos SEO
+# Matriz de automatização dos 420 pontos SEO
 
 ## Resultado
 
-Todos os 406 códigos do catálogo foram classificados individualmente segundo o tipo mínimo de execução necessário para produzir uma conclusão defensável.
+Todos os 420 códigos do catálogo foram classificados individualmente segundo o tipo mínimo de execução necessário para produzir uma conclusão defensável.
 
 | Classe | Significado | Total | Problemas | Funções |
 |---|---|---:|---:|---:|
-| A | Automatização local direta: código, HTTP, HTML, DOM renderizado, recursos, grafo interno ou validação estrutural. | 291 | 288 | 3 |
+| A | Automatização local direta: código, HTTP, HTML, DOM renderizado, recursos, grafo interno ou validação estrutural. | 293 | 290 | 3 |
 | B | Automatização com histórico: o teste é determinístico, mas exige duas ou mais observações persistidas. | 16 | 15 | 1 |
-| C | Automatização com fonte externa: exige API, feed, ferramenta ou fornecedor de dados, mas pode ser executado sem julgamento humano depois de configurado. | 31 | 25 | 6 |
-| D | Verificação híbrida: o script recolhe, mede e sinaliza candidatos, mas uma LLM ou pessoa precisa avaliar significado, veracidade, utilidade, intenção ou decisão comercial. | 68 | 59 | 9 |
-| **Total** |  | **406** | **387** | **19** |
+| C | Automatização com fonte externa: exige API, feed, ferramenta ou fornecedor de dados, mas pode ser executado sem julgamento humano depois de configurado. | 39 | 30 | 9 |
+| D | Verificação híbrida: o script recolhe, mede e sinaliza candidatos, mas uma LLM ou pessoa precisa avaliar significado, veracidade, utilidade, intenção ou decisão comercial. | 72 | 62 | 10 |
+| **Total** |  | **420** | **397** | **23** |
 
 Conclusões:
 
-- **291 pontos, 71,7%, podem ser automatizados imediatamente** com um auditor local bem construído.
-- **307 pontos, 75,6%, ficam automatizados** quando o auditor também guardar snapshots históricos.
-- **338 pontos, 83,3%, ficam automatizados** quando forem acrescentados os adaptadores externos necessários.
-- Os restantes **68 pontos não devem receber aprovação automática**. O script pode produzir evidência e candidatos, mas a decisão final é semântica ou comercial.
+- **293 pontos, 69,8%, podem ser automatizados imediatamente** com um auditor local bem construído.
+- **309 pontos, 73,6%, ficam automatizados** quando o auditor também guardar snapshots históricos.
+- **348 pontos, 82,9%, ficam automatizados** quando forem acrescentados os adaptadores externos necessários.
+- Os restantes **72 pontos não devem receber aprovação automática**. O script pode produzir evidência e candidatos, mas a decisão final é semântica ou comercial.
 
 Esta classificação avalia automatizabilidade, não aplicabilidade a um site concreto. Um detector só pode aprovar um código depois de implementar integralmente os critérios atómicos presentes no catálogo, possuir fixtures positivas e negativas e guardar evidência reproduzível.
 
 ## Arquitetura eficiente recomendada
 
-Não criar 406 crawlers nem selecionar testes por palavras existentes nos nomes. Implementar uma recolha comum e um registo explícito por código:
+Não criar 420 crawlers nem selecionar testes por palavras existentes nos nomes. Implementar uma recolha comum e um registo explícito por código:
 
 1. `collector-http`: URLs, status, redirects, headers, tempos, tamanho e recursos.
 2. `collector-html`: HTML inicial, metadados, headings, links, imagens, idioma, robots, canonical, hreflang e JSON-LD.
@@ -39,7 +39,7 @@ Não criar 406 crawlers nem selecionar testes por palavras existentes nos nomes.
 
 ## Classe A — automatização local direta
 
-Estes 291 pontos devem ter detectores determinísticos dedicados. Um único crawl pode fornecer dados a vários detectores, mas cada código conserva critérios, fixtures, resultado e evidência próprios.
+Estes 293 pontos devem ter detectores determinísticos dedicados. Um único crawl pode fornecer dados a vários detectores, mas cada código conserva critérios, fixtures, resultado e evidência próprios.
 
 - **`VideoObject` (2):** VDO-001, VDO-002
 - **Alojamentos de férias (3):** VAC-001, VAC-002, VAC-003
@@ -68,6 +68,7 @@ Estes 291 pontos devem ter detectores determinísticos dedicados. Um único craw
 - **JavaScript (5):** JSC-001, JSC-002, JSC-003, JSC-004, JSC-005
 - **Links (23):** LNK-001, LNK-002, LNK-003, LNK-004, LNK-005, LNK-006, LNK-007, LNK-008, LNK-009, LNK-010, LNK-011, LNK-012, LNK-013, LNK-014, LNK-015, LNK-016, LNK-017, LNK-018, LNK-019, LNK-020, LNK-021, LNK-022, LNK-023
 - **Localization (13):** LOC-001, LOC-002, LOC-003, LOC-004, LOC-005, LOC-006, LOC-007, LOC-008, LOC-009, LOC-010, LOC-011, LOC-012, LOC-013
+- **Navegação facetada e espaço de rastreamento (2):** FAC-001, FAC-002
 - **Merchant listings (5):** MER-001, MER-002, MER-003, MER-004, MER-005
 - **Other (8):** OTH-004, OTH-006, OTH-007, OTH-008, OTH-010, OTH-012, OTH-017, OTH-018
 - **Política de devolução estruturada (5):** RET-001, RET-002, RET-003, RET-004, RET-005
@@ -121,7 +122,7 @@ O armazenamento pode ser um conjunto de ficheiros JSON comprimidos por auditoria
 
 ## Classe C — automatização com fontes externas
 
-Estes 31 pontos são automatizáveis, mas não através do crawler isolado. Sem a fonte indicada, devem ficar `Não verificável`.
+Estes 39 pontos são automatizáveis, mas não através do crawler isolado. Sem a fonte indicada, devem ficar `Não verificável`.
 
 - **CNT-014 — Page and SERP titles do not match:** recolher o title apresentado na SERP por consulta/URL e comparar com o HTML.
 - **CNT-016 — SERP title changed:** guardar observações da SERP e comparar períodos equivalentes.
@@ -137,6 +138,9 @@ Estes 31 pontos são automatizáveis, mas não através do crawler isolado. Sem 
 - **FUN-005 — Obter o portfólio de keywords e páginas dos concorrentes:** fornecedor de rankings/keywords ou exportação autorizada.
 - **FUN-014 — Detetar canibalização por consulta e intenção:** dados GSC query–page e clustering; revisão apenas nos casos semanticamente ambíguos.
 - **FUN-015 — Monitorizar posições, concorrentes e Share of Voice:** snapshots SERP e pesos de procura configurados.
+- **FUN-020 — Diagnosticar e reduzir index bloat por padrões de URL:** GSC, sitemaps, crawl, rotas e logs agrupados por template e parâmetros.
+- **FUN-021 — Auditar presença local e Google Business Profile:** Business Profile API/exportação, site, avaliações e dados estruturados por localização.
+- **FUN-022 — Cruzar Google Ads e Search Console para priorizar SEO:** termos pagos e consultas orgânicas alinhados por mercado, dispositivo e período.
 - **MER-006 — Portes estruturados não correspondem ao checkout:** browser de teste ou API de checkout com destinos e carrinhos controlados.
 - **MER-007 — Feed Merchant Center diverge do site:** Merchant Center/feed + página/JSON-LD + fonte de produtos.
 - **OTH-001 — 3XX page receives organic traffic:** GSC por página cruzado com resposta HTTP.
@@ -149,6 +153,11 @@ Estes 31 pontos são automatizáveis, mas não através do crawler isolado. Sem 
 - **OTH-015 — Organic traffic dropped:** GSC/Analytics, períodos equivalentes e segmentação.
 - **OTH-016 — Pages dropped from Top 10:** histórico de SERP ou fonte de rankings.
 - **PRD-006 — Página de produto não indexada:** URL Inspection/GSC por canonical de produto.
+- **SEC-001 — Search Console reporta um problema de segurança:** relatório Security Issues, categorias e amostras.
+- **SEC-002 — URL injetado ou spam continua acessível depois da limpeza:** lista completa do incidente e respetivas respostas atuais.
+- **SEC-003 — URL pirateado redireciona para uma página legítima sem equivalência:** URLs do incidente, cadeias e avaliação de equivalência definida pelo plano de recuperação.
+- **SEC-005 — Revisão de segurança pedida no momento errado ou sem evidência completa:** estado e histórico de revisão no Search Console.
+- **SEC-006 — Fontes internas continuam a publicar URLs do incidente:** padrões conhecidos cruzados com crawl, sitemaps, feeds, rotas e caches.
 - **UXP-007 — Page stopped passing CWV requirements:** CrUX/GSC histórico, não apenas Lighthouse.
 - **UXP-008 — Pages with poor CLS:** dados de campo CrUX/GSC; laboratório apenas para diagnóstico.
 - **UXP-009 — Pages with poor FID:** histórico de campo quando o período ainda possuir FID; não inventar o valor em dados atuais que já usam INP.
@@ -157,7 +166,7 @@ Estes 31 pontos são automatizáveis, mas não através do crawler isolado. Sem 
 
 ## Classe D — verificação híbrida
 
-Nestes 68 pontos o script deve recolher factos, calcular sinais e ordenar candidatos. A aprovação ou reprovação final exige checklist semântica por LLM/pessoa. Um score ou limiar nunca deve converter automaticamente estes códigos em `Aprovado`.
+Nestes 72 pontos o script deve recolher factos, calcular sinais e ordenar candidatos. A aprovação ou reprovação final exige checklist semântica por LLM/pessoa. Um score ou limiar nunca deve converter automaticamente estes códigos em `Aprovado`.
 
 - **GSA-001 — Título vago, duplicado ou com boilerplate excessivo**
 - **GSA-002 — Keyword stuffing ou branding repetitivo no título**
@@ -172,6 +181,7 @@ Nestes 68 pontos o script deve recolher factos, calcular sinais e ordenar candid
 - **CNT-030 — Página de categoria comercial não ajuda a selecionar produtos**
 - **CNT-031 — Produtos ou variantes têm conteúdo praticamente idêntico**
 - **CNT-032 — Pesquisas relevantes anteriores à compra não têm resposta adequada**
+- **CNT-033 — Página de produto não fornece informação suficiente para decidir a compra**
 - **PAY-003 — Paywall não fornece uma amostra útil**
 - **EDS-006 — Breadcrumb reflete parâmetros em vez da hierarquia útil**
 - **EDU-006 — `DiscussionForumPosting` aplicado a conteúdo inadequado**
@@ -221,9 +231,12 @@ Nestes 68 pontos o script deve recolher factos, calcular sinais e ordenar candid
 - **FUN-012 — Priorizar oportunidades de ranking**
 - **FUN-013 — Produzir um plano técnico de melhoria para uma página**
 - **FUN-017 — Orquestrar a análise competitiva completa**
+- **FUN-023 — Executar gate SEO de lançamento ou migração**
 - **OTH-019 — Páginas importantes têm poucas referências externas independentes**
 - **PRD-005 — Disponibilidade estruturada diverge do produto**
 - **PRD-008 — Dados de produto inconsistentes entre idiomas ou regiões**
+- **PRD-009 — Ciclo de vida de produto indisponível é incoerente**
+- **SEC-004 — O vetor que permitiu a invasão não foi fechado**
 - **VID-003 — Watch page não é indexável ou o vídeo não é o conteúdo principal**
 - **WST-006 — Web Story demasiado textual ou com assets degradados**
 - **WST-007 — Web Story excessivamente comercial**
@@ -243,7 +256,7 @@ Nestes 68 pontos o script deve recolher factos, calcular sinais e ordenar candid
 
 ### Versão 1 — maior retorno com menor complexidade
 
-Implementar primeiro a classe A, exceto renderização pesada de vídeo/Web Stories quando o projeto não possuir esses tipos. O mesmo crawl deve alimentar HTTP, metadados, links, sitemaps, robots, recursos, localization e dados estruturados. Isto cobre 291 pontos sem armazenamento remoto.
+Implementar primeiro a classe A, exceto renderização pesada de vídeo/Web Stories quando o projeto não possuir esses tipos. O mesmo crawl deve alimentar HTTP, metadados, links, sitemaps, robots, recursos, localization e dados estruturados. Isto cobre 293 pontos sem armazenamento remoto.
 
 ### Versão 2 — snapshots locais
 
@@ -269,5 +282,5 @@ O auditor só pode afirmar que suporta um código quando:
 2. Todos os critérios atómicos do catálogo estão mapeados.
 3. Existem fixtures válidas e mutações inválidas para cada ramo material.
 4. A evidência contém valores observados, esperados, universo e versão.
-5. O reconciliador confirma que os 406 códigos aparecem exatamente uma vez.
+5. O reconciliador confirma que os 420 códigos aparecem exatamente uma vez.
 6. Códigos das classes B, C e D não são convertidos em A por conveniência ou ausência de dados.

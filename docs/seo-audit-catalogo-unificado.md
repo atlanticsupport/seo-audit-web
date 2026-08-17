@@ -71,7 +71,7 @@ Criar uma linha por código não demonstra que o código foi realmente verificad
 - `cobertura_de_evidencia`: o resultado pode ser reproduzido a partir dos dados guardados;
 - `cobertura_de_revalidacao`: quando houve correção, o mesmo critério voltou a ser executado depois da alteração.
 
-É proibido apresentar `406/406`, `100%` ou expressão equivalente como prova de auditoria validada quando isso significa apenas que foram criadas linhas na matriz. O relatório deve apresentar separadamente os quatro tipos de cobertura.
+É proibido apresentar `420/420`, `100%` ou expressão equivalente como prova de auditoria validada quando isso significa apenas que foram criadas linhas na matriz. O relatório deve apresentar separadamente os quatro tipos de cobertura.
 
 ### Registo obrigatório de testes por código
 
@@ -1668,6 +1668,16 @@ Consultas do Search Console sobre escolha, comparação, diferenças, medidas, m
 
 Decidir se cada grupo de intenção deve ser respondido numa categoria, ficha de produto ou guia independente. Expandir uma página existente quando a intenção for a mesma; criar uma nova apenas quando houver uma necessidade distinta. Incluir critérios de decisão, comparações verificáveis, exemplos, limitações, experiência própria, imagens ou dados úteis e uma resposta direta à pergunta. Ligar os guias às categorias e produtos pertinentes e criar ligações de retorno; não gerar uma página quase igual para cada palavra-chave. [Referência oficial](https://developers.google.com/search/docs/fundamentals/creating-helpful-content).
 
+### CNT-033 / Página de produto não fornece informação suficiente para decidir a compra
+
+**Detalhes do problema:**
+
+Escopo: páginas indexáveis de produto. A página apresenta nome, preço e descrição genérica, mas omite atributos materiais para a decisão, como medidas, materiais, compatibilidade, aplicações, limitações, variantes, conteúdo da embalagem, manutenção, entrega ou devolução aplicáveis. O teste deve comparar a informação visível com os dados reais do produto e com as necessidades da intenção; número de palavras, presença de tabs ou existência de `Product` não provam utilidade.
+
+**Solução:**
+
+Publicar dados específicos e verificáveis provenientes do catálogo, documentação técnica, suporte e utilização real. Explicar para quem serve, quando não serve, diferenças entre variantes, compatibilidades, medidas e limitações; usar tabelas, imagens ou vídeo quando reduzirem incerteza. Manter preço, stock, portes e devoluções coerentes entre conteúdo visível, JSON-LD, feed e checkout. Não copiar descrições do fabricante nem criar texto para atingir um comprimento. [Referência oficial](https://developers.google.com/search/docs/fundamentals/creating-helpful-content).
+
 ## Categoria: Social tags
 
 ### SOC-001 / Open Graph tags incomplete
@@ -2550,13 +2560,11 @@ Split your sitemap into multiple smaller sitemaps. To make it easier to manage m
 
 **Detalhes do problema:**
 
-Your sitemap has unsupported format, encoding or content type.
-
-The auditor accepts XML sitemaps. Flag RSS, mRSS, Atom or text formats, invalid encoding, and an incorrect HTTP `Content-Type` response.
+O sitemap usa um formato não suportado ou está malformado. O Google aceita XML, RSS 2.0, Atom 1.0, mRSS e ficheiros de texto com um URL absoluto por linha. RSS e Atom normalmente expõem apenas URLs recentes; isso não é, por si só, um erro de formato.
 
 **Solução:**
 
-Ensure that the sitemap is UTF-8 encoded, returns the "application/xml" or "text/xml" content-type HTTP header, and that it has the correct namespace and syntax of the XML header attribute.
+Gerar UTF-8 válido num dos formatos suportados. Em XML, fechar corretamente o elemento raiz e escapar entidades; em RSS/Atom, publicar links absolutos em cada item/entry; num sitemap de texto, incluir somente um URL absoluto por linha. Usar um sitemap XML ou índice quando for necessário representar o conjunto completo e dividir ficheiros que excedam os limites. [Referência oficial](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap).
 
 ### SMP-012 / Sitemap includes URLs out of its scope
 
@@ -2931,6 +2939,90 @@ Páginas comerciais ou editoriais prioritárias recebem poucas ou nenhumas liga�
 
 Obter referências editoriais legítimas publicando recursos que mereçam citação, como estudos, dados próprios, ferramentas, comparações técnicas, casos reais, fotografias ou guias especializados. Procurar menções relevantes de clientes, fornecedores, fabricantes, distribuidores, associações profissionais e imprensa; recuperar menções sem link e backlinks quebrados; apontar para a URL canonical e preservar links válidos com redirects quando uma página muda. Não comprar links, usar PBN, automatizar comentários ou executar trocas em escala. Marcar publicidade e colocações pagas com `rel="sponsored"` e UGC com `rel="ugc"`. [Referência oficial](https://developers.google.com/search/docs/essentials/spam-policies#link-spam).
 
+## Categoria: Navegação facetada e espaço de rastreamento
+
+### FAC-001 / URL repete o mesmo parâmetro de filtro
+
+**Detalhes do problema:**
+
+Uma URL rastreável contém a mesma chave de query mais de uma vez, incluindo repetições do mesmo valor ou vários valores do mesmo filtro. Combinações duplicadas ou sem sentido multiplicam URLs, tornam a ordem instável e podem criar um espaço de rastreamento sem conteúdo adicional.
+
+**Solução:**
+
+Gerar cada filtro uma única vez, deduplicar valores e publicar links apenas para a forma normalizada. Devolver HTTP 404 para combinações vazias, inválidas ou impossíveis; quando uma variante antiga tiver equivalente inequívoco, redirecioná-la para a URL normalizada e manter canonical, sitemap e links internos coerentes. [Referência oficial](https://developers.google.com/crawling/docs/faceted-navigation).
+
+### FAC-002 / O mesmo conjunto de parâmetros aparece em ordens diferentes
+
+**Detalhes do problema:**
+
+Duas ou mais URLs rastreáveis usam o mesmo caminho e os mesmos pares chave–valor, mas ordenam os parâmetros de forma diferente. Embora representem o mesmo estado de filtro, cada sequência pode ser descoberta e rastreada como URL distinta.
+
+**Solução:**
+
+Definir uma ordenação estável de chaves e valores no gerador de URLs, nos formulários e em todos os links internos. Redirecionar variantes equivalentes para a forma escolhida quando isso for seguro e emitir canonical consistente. Não depender apenas de `rel=canonical` para controlar um espaço de URLs ilimitado. [Referência oficial](https://developers.google.com/crawling/docs/faceted-navigation).
+
+## Categoria: Segurança e higiene do índice
+
+### SEC-001 / Search Console reporta um problema de segurança
+
+**Detalhes do problema:**
+
+O relatório Security Issues identifica conteúdo pirateado, malware, software indesejado, páginas enganosas ou outro incidente. Os URLs apresentados pelo Google são amostras e não delimitam o universo afetado; corrigir apenas os exemplos não demonstra recuperação.
+
+**Solução:**
+
+Exportar categorias e amostras, identificar o vetor e procurar o mesmo padrão em ficheiros, base de dados, templates, utilizadores, logs, sitemaps e URLs indexadas. Remover todo o conteúdo malicioso, fechar o vetor, renovar credenciais comprometidas, atualizar componentes e testar o site completo. Pedir revisão no Search Console somente depois de todas as variantes estarem corrigidas. [Referência oficial](https://support.google.com/webmasters/answer/9044101).
+
+### SEC-002 / URL injetado ou spam continua acessível depois da limpeza
+
+**Detalhes do problema:**
+
+Um URL conhecido do incidente ainda devolve HTTP 200 com conteúdo injetado, soft 404, página gerada por pesquisa interna ou outra resposta indexável. Uma amostra limpa não aprova o padrão inteiro; devem ser testadas todas as URLs conhecidas e variantes reproduzíveis.
+
+**Solução:**
+
+Remover a origem que recria o conteúdo e devolver 404 ou 410 quando não existir substituto legítimo. Remover o URL de sitemaps, links, canonicals, hreflang, feeds e caches. Usar a ferramenta Removals apenas para ocultação temporária urgente; a remoção permanente exige 404/410, autenticação ou `noindex` rastreável. [Referências oficiais](https://support.google.com/webmasters/answer/9689846) e [Google — erros de crawling](https://developers.google.com/search/docs/crawling-indexing/troubleshoot-crawling-errors).
+
+### SEC-003 / URL pirateado redireciona para uma página legítima sem equivalência
+
+**Detalhes do problema:**
+
+Um URL criado pelo ataque redireciona para a homepage, categoria ou produto sem relação semântica. O redirect preserva um destino para um URL que deveria desaparecer e pode confundir utilizadores, crawling e consolidação de sinais.
+
+**Solução:**
+
+Restaurar o conteúdo legítimo original quando o URL existia antes do incidente. Se era exclusivamente malicioso e não possui substituto equivalente, responder 404 ou 410. Usar 301 apenas quando existe uma página realmente equivalente e atualizar todas as referências internas para o destino final. [Referência oficial](https://developers.google.com/search/docs/crawling-indexing/troubleshoot-crawling-errors).
+
+### SEC-004 / O vetor que permitiu a invasão não foi fechado
+
+**Detalhes do problema:**
+
+O conteúdo visível foi removido, mas não existe evidência de correção da causa: componente vulnerável, credencial comprometida, utilizador administrativo, permissão de ficheiros, endpoint de upload, segredo exposto, dependência ou configuração. A recorrência invalida a limpeza SEO.
+
+**Solução:**
+
+Determinar a causa a partir de logs, alterações, versões e contas; corrigir ou remover o componente vulnerável; revogar sessões, tokens e credenciais; rever privilégios; atualizar dependências; verificar tarefas agendadas, ficheiros persistentes e backdoors; executar uma nova análise de segurança antes de reabrir indexação ou pedir revisão.
+
+### SEC-005 / Revisão de segurança pedida no momento errado ou sem evidência completa
+
+**Detalhes do problema:**
+
+Foi pedida revisão enquanto URLs, padrões ou o vetor continuavam ativos, ou todos os problemas foram corrigidos mas a revisão aplicável não foi submetida. Pedidos repetidos sem nova correção não substituem investigação.
+
+**Solução:**
+
+Concluir e registar a limpeza integral, confirmar cada categoria e padrão, e só então usar `Request Review` com uma descrição curta da causa, alterações e validação. Acompanhar a resposta no Search Console; não assumir que o desaparecimento de um exemplo significa que a ação foi levantada. [Referência oficial](https://support.google.com/webmasters/answer/9044101).
+
+### SEC-006 / Fontes internas continuam a publicar URLs do incidente
+
+**Detalhes do problema:**
+
+Sitemaps, links internos, canonicals, hreflang, feeds, rotas, templates, pesquisa interna ou caches continuam a gerar ou referenciar URLs conhecidas do ataque. Mesmo quando o destino já devolve erro, estas fontes prolongam descoberta e recrawling.
+
+**Solução:**
+
+Cruzar a lista completa de URLs e padrões do incidente com todas as fontes de descoberta, corrigir o gerador comum, regenerar sitemaps e feeds, purgar caches e repetir o crawl. O critério de aceitação é zero referências e zero novas URLs do padrão, preservando apenas URLs legítimas comprovadas.
+
 ## Categoria: Indexação e citação em sistemas de IA
 
 ### AIX-001 / Página importante não está indexada
@@ -3284,6 +3376,16 @@ As versões linguísticas ou regionais declaram URL, nome, moeda, preço, stock,
 **Solução:**
 
 Gerar cada versão a partir da mesma entidade de produto, adaptar apenas conteúdo e mercados aplicáveis, manter canonical própria e configurar `hreflang` recíproco.
+
+### PRD-009 / Ciclo de vida de produto indisponível é incoerente
+
+**Detalhes do problema:**
+
+Um produto temporariamente esgotado, em pré-venda, descontinuado ou removido apresenta estados diferentes entre página, controlo de compra, JSON-LD, feed e checkout, ou usa uma resposta/redirect inadequado ao destino real. O teste deve distinguir indisponibilidade temporária, substituição equivalente e remoção definitiva; a mera presença de `OutOfStock` não prova coerência.
+
+**Solução:**
+
+Para falta temporária, manter o URL estável quando a página continua útil, mostrar o estado explicitamente, desativar a compra e sincronizar `Offer.availability` e feed. Para `preorder` ou `backorder`, publicar a disponibilidade real e `availability_date` no feed quando exigida. Para produto descontinuado, remover do feed; manter a página 200 se ainda responde a procura e oferece alternativas, redirecionar apenas para substituto equivalente, ou devolver 404/410 quando não existe substituto. [Referências oficiais](https://support.google.com/merchants/answer/4752265) e [Google Merchant Center — disponibilidade](https://support.google.com/merchants/answer/6324448).
 
 ## Categoria: Merchant listings
 
@@ -5828,3 +5930,74 @@ O executor deve manter, pelo menos, estas entidades:
 **Critério de conclusão:** a autorização está concluída quando o callback validou o `state`, o Worker trocou o código sem expor tokens, a API listou a propriedade esperada e a LLM confirmou que essa propriedade corresponde ao domínio auditado. A auditoria continua sem GSC quando qualquer uma destas condições não puder ser satisfeita.
 
 **Referências:** [Google — OAuth 2.0 para aplicações web](https://developers.google.com/identity/protocols/oauth2/web-server), [Google — expiração e revogação de refresh tokens](https://developers.google.com/identity/protocols/oauth2), [Google Search Console API — autorização e scope de leitura](https://developers.google.com/webmaster-tools/v1/how-tos/authorizing) e [Google Search Console API — limites funcionais](https://developers.google.com/webmaster-tools/v1/api_reference_index).
+
+### FUN-020 / Diagnosticar e reduzir index bloat por padrões de URL
+
+**Informação a obter:** universo de URLs descobertas, indexadas e com procura, agrupado por caminho, template e conjunto de parâmetros; origem de descoberta; resposta HTTP; canonical; robots; sitemap; links internos; impressões e cliques GSC.
+
+**Sequência obrigatória:**
+
+1. Unir URLs de crawl, sitemaps, GSC, feeds, rotas e logs disponíveis; não usar apenas `site:` como contagem de índice.
+2. Normalizar host, caminho e parâmetros sem apagar distinções antes de as medir. Agrupar por template, prefixo, chaves de query e assinatura de filtros.
+3. Para cada grupo, calcular URLs descobertas, indexáveis, em sitemap, com canonical própria, indexadas/observadas no GSC e com procura; guardar amostras e totais.
+4. Classificar a finalidade de pesquisa, filtros, ordenações, paginação, tracking, sessões, combinações vazias, duplicados e URLs pirateadas. Uma contagem elevada não prova bloat sem demonstrar baixa utilidade ou duplicação.
+5. Corrigir a origem comum: links apenas para URLs normalizadas, ordem estável, parâmetros sem repetição, 404 para combinações impossíveis, sitemap somente com canonicals e conteúdo útil.
+6. Quando URLs facetadas não precisarem de ser rastreadas, impedir crawling conforme a arquitetura; quando precisarem, garantir resposta rápida, canonical coerente e espaço finito. `noindex` exige crawling e `rel=canonical` isolado não controla um espaço infinito.
+7. Comparar snapshots posteriores por grupo, crawl e GSC; confirmar redução de URLs inúteis sem perda de páginas úteis, impressões ou conversões.
+
+**Saída obrigatória:** tabela por padrão com `pattern`, `purpose`, `discovered`, `indexable`, `in_sitemap`, `gsc_seen`, `traffic`, `cause`, `action`, `risk`, exemplos e critério de revalidação.
+
+**Referências:** [Google — navegação facetada](https://developers.google.com/crawling/docs/faceted-navigation), [Google — canonicalização](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls) e [Tillison — caso de index bloat](https://tillison.co.uk/blog/resolving-a-50-spike-in-index-bloat-without-wasting-developer-time/).
+
+### FUN-021 / Auditar presença local e Google Business Profile
+
+**Informação a obter:** estabelecimentos reais, morada e área servida, telefone, horários normais e especiais, categoria principal/secundárias, landing page, atributos, fotografias, avaliações e respostas, estado do perfil e dados `LocalBusiness` visíveis.
+
+**Sequência obrigatória:**
+
+1. Inventariar cada localização e associar exatamente um perfil e uma landing page legítimos; não criar locais virtuais ou duplicados.
+2. Com acesso autorizado à Business Profile API ou exportação, comparar nome, categoria, endereço/área, telefone, URL, horários, atributos e estado com o site e outras fontes oficiais.
+3. Verificar que a landing page é indexável, descreve serviços e localização reais, contém contacto e horários visíveis e usa o subtipo `LocalBusiness` aplicável com valores coincidentes.
+4. Recolher volume, distribuição, recência e temas de avaliações sem fabricar nota mínima. Identificar reclamações recorrentes e confirmar que respostas não expõem dados pessoais.
+5. Confirmar fotografias atuais e representativas, páginas locais úteis, links internos e referências independentes relevantes.
+6. Separar os fatores documentados — relevância, distância e notoriedade — e não prometer controlar distância nem posições. Não usar incentivos condicionados a avaliação positiva.
+
+**Saída obrigatória:** matriz por localização com valor esperado, valor observado, fonte, divergência, ação, proprietário e evidência; marcar `Não verificável` quando não existir acesso ao perfil.
+
+**Referências:** [Google — ranking local](https://support.google.com/business/answer/7091), [Google — `LocalBusiness`](https://developers.google.com/search/docs/appearance/structured-data/local-business) e [Tillison — local SEO audit](https://tillison.co.uk/blog/how-to-do-a-local-seo-audit/).
+
+### FUN-022 / Cruzar Google Ads e Search Console para priorizar SEO
+
+**Informação a obter:** termos de pesquisa pagos, custo, cliques e conversões; consultas orgânicas, landing pages, impressões, cliques, CTR e posição; país, idioma, dispositivo, rede, intervalo e definição de conversão.
+
+**Sequência obrigatória:**
+
+1. Autorizar ou importar Search Console e Google Ads sem expor credenciais; alinhar datas, país, idioma, dispositivo e timezone.
+2. Usar termos de pesquisa efetivos, não apenas keywords configuradas. Normalizar caixa, espaços e acentos preservando a consulta original e agrupar variantes apenas quando mantêm a mesma intenção.
+3. Produzir quatro grupos: conversão paga com baixa visibilidade orgânica; custo pago alto com procura orgânica comprovada; visibilidade orgânica forte que permite testar redução paga; consulta relevante sem landing page adequada.
+4. Associar cada grupo à URL que melhor corresponde à intenção e executar FUN-007, FUN-008 e FUN-013 antes de recomendar conteúdo ou alterações.
+5. Não tratar conversão paga como prova de que a mesma página deve ranquear, nem atribuir à alteração SEO uma variação causada por orçamento, marca, sazonalidade ou campanha.
+6. Medir depois por consulta e landing page com baseline, anotação da mudança e janelas comparáveis.
+
+**Saída obrigatória:** backlog com consulta/cluster, métricas pagas e orgânicas alinhadas, intenção, URL, lacuna, ação, impacto esperado, esforço, hipótese e método de medição.
+
+**Referências:** [Google — combinar Search Console e Analytics](https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console) e [Tillison — alinhar SEO e PPC](https://tillison.co.uk/blog/how-to-align-seo-and-ppc-ecommerce-efforts-for-better-results/).
+
+### FUN-023 / Executar gate SEO de lançamento ou migração
+
+**Informação a obter:** inventário e métricas dos URLs antigos, mapa antigo→novo, ambientes, canonicals, robots/noindex, sitemaps, hreflang, links, dados estruturados, Analytics/GSC, DNS/CDN e responsáveis por rollback.
+
+**Sequência obrigatória:**
+
+1. Antes do lançamento, guardar crawl e métricas por URL/template; identificar páginas com tráfego, links, conversões e indexação.
+2. Criar mapa individual de redirects: 301/308 para equivalente real, 404/410 sem substituto e nenhuma cadeia, loop ou redirect geral para a homepage.
+3. Rastrear staging e confirmar conteúdo, títulos, canonicals, hreflang, links, recursos, structured data, mobile e formulários; staging deve permanecer fora do índice por autenticação ou controlo adequado.
+4. No artefacto de produção, validar que bloqueios de staging foram removidos somente do domínio público, canonical/host/protocolo são finais, sitemaps contêm apenas 200 canonicals e tracking funciona.
+5. Lançar com janela, responsáveis e rollback. Rastrear imediatamente URLs antigas e novas, comparar templates e submeter sitemaps no Search Console.
+6. Monitorizar erros, cobertura, crawling, impressões, cliques, posições e conversões por grupos equivalentes; corrigir causas raiz e conservar o mapa de redirects por tempo suficiente.
+
+**Critério de bloqueio:** não aprovar lançamento com `noindex`/robots de staging em produção, redirects críticos ausentes, canonical para o host errado, sitemap antigo, recursos essenciais bloqueados, analytics inoperante ou ausência de rollback para falha material.
+
+**Saída obrigatória:** checklist `pre_launch`, `go_live`, `post_launch`, cada item com responsável, evidência, estado, bloqueante e revalidação; anexo completo de redirects e diferenças antes/depois.
+
+**Referências:** [Google — lançamento de e-commerce](https://developers.google.com/search/docs/specialty/ecommerce/how-to-launch-an-ecommerce-website), [Google — redirects](https://developers.google.com/search/docs/crawling-indexing/301-redirects) e [Tillison — checklist de website novo](https://tillison.co.uk/blog/new-website-checklist/).

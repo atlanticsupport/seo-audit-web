@@ -886,8 +886,8 @@ export const RULES = [
     "code": "SMP-011",
     "name": "Sitemap in the wrong format",
     "category": "Sitemaps",
-    "details": "Your sitemap has unsupported format, encoding or content type. The auditor accepts XML sitemaps. Flag RSS, mRSS, Atom or text formats, invalid encoding, and an incorrect HTTP Content-Type response.",
-    "solution": "Ensure that the sitemap is UTF-8 encoded, returns the \"application/xml\" or \"text/xml\" content-type HTTP header, and that it has the correct namespace and syntax of the XML header attribute."
+    "details": "O sitemap usa um formato não suportado ou está malformado. O Google aceita XML, RSS 2.0, Atom 1.0, mRSS e ficheiros de texto com um URL absoluto por linha. RSS e Atom normalmente expõem apenas URLs recentes; isso não é, por si só, um erro de formato.",
+    "solution": "Gerar UTF-8 válido num dos formatos suportados. Em XML, fechar corretamente o elemento raiz e escapar entidades; em RSS/Atom, publicar links absolutos em cada item/entry; num sitemap de texto, incluir somente um URL absoluto por linha. Usar um sitemap XML ou índice quando for necessário representar o conjunto completo e dividir ficheiros que excedam os limites. Referência oficial."
   },
   {
     "code": "SMP-012",
@@ -993,6 +993,20 @@ export const RULES = [
     "category": "Other",
     "details": "Structured data is a standardized way to provide information about a web page. It helps search engines to understand your content and better represent it in the search results. Structured data needs to conform to the schema.org markup format. Some pages on your site have structured data that does not meet the schema vocabulary and guidelines.",
     "solution": "Validate each affected item against the current Schema.org vocabulary. Correct unsupported properties, invalid types, value formats, and nesting in JSON-LD, Microdata, or RDFa."
+  },
+  {
+    "code": "FAC-001",
+    "name": "URL repete o mesmo parâmetro de filtro",
+    "category": "Navegação facetada e espaço de rastreamento",
+    "details": "Uma URL rastreável contém a mesma chave de query mais de uma vez, incluindo repetições do mesmo valor ou vários valores do mesmo filtro. Combinações duplicadas ou sem sentido multiplicam URLs, tornam a ordem instável e podem criar um espaço de rastreamento sem conteúdo adicional.",
+    "solution": "Gerar cada filtro uma única vez, deduplicar valores e publicar links apenas para a forma normalizada. Devolver HTTP 404 para combinações vazias, inválidas ou impossíveis; quando uma variante antiga tiver equivalente inequívoco, redirecioná-la para a URL normalizada e manter canonical, sitemap e links internos coerentes. Referência oficial."
+  },
+  {
+    "code": "FAC-002",
+    "name": "O mesmo conjunto de parâmetros aparece em ordens diferentes",
+    "category": "Navegação facetada e espaço de rastreamento",
+    "details": "Duas ou mais URLs rastreáveis usam o mesmo caminho e os mesmos pares chave–valor, mas ordenam os parâmetros de forma diferente. Embora representem o mesmo estado de filtro, cada sequência pode ser descoberta e rastreada como URL distinta.",
+    "solution": "Definir uma ordenação estável de chaves e valores no gerador de URLs, nos formulários e em todos os links internos. Redirecionar variantes equivalentes para a forma escolhida quando isso for seguro e emitir canonical consistente. Não depender apenas de rel=canonical para controlar um espaço de URLs ilimitado. Referência oficial."
   },
   {
     "code": "AIX-002",

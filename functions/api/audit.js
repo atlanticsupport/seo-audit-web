@@ -188,6 +188,7 @@ const DEFERRED_CODES = new Set([
   ...BOOTSTRAP_CODES,
   'DUP-001', 'SDG-004', 'SDG-005', 'AIX-013', 'AIX-014', 'AIX-015',
   'IDX-001', 'IDX-002', 'IDX-003', 'IDX-009',
+  'FAC-002',
   ...Array.from({ length: 23 }, (_, index) => `LNK-${String(index + 1).padStart(3, '0')}`),
   ...Array.from({ length: 13 }, (_, index) => `LOC-${String(index + 1).padStart(3, '0')}`),
   ...Array.from({ length: 15 }, (_, index) => `SMP-${String(index + 1).padStart(3, '0')}`),

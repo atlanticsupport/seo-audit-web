@@ -148,14 +148,14 @@ add(['SMP-010'], context => {
   return issueFree(complete, sitemap => sitemap.urls.length > 50_000, complete.length > 0);
 });
 add(['SMP-011'], context => issueFree(context.sitemaps, sitemap => sitemap.response.status === 200 && sitemap.kind === 'invalid', context.sitemaps.length > 0));
-add(['SMP-012'], context => issueFree(context.sitemaps.filter(item => item.kind === 'urlset'), sitemap => sitemap.urls.some(url => !sitemapScope(url, sitemap.url))));
+add(['SMP-012'], context => issueFree(context.sitemaps.filter(item => !['index', 'invalid'].includes(item.kind)), sitemap => sitemap.urls.some(url => !sitemapScope(url, sitemap.url))));
 add(['SMP-013'], context => {
   const urls = sitemapUrls(context);
   return issueFree(indexablePages(context), page => !urls.has(normalize(page.url)), urls.size > 0);
 });
 add(['SMP-015'], context => {
   const counts = new Map();
-  for (const sitemap of context.sitemaps.filter(item => item.kind === 'urlset')) for (const url of sitemap.urls) counts.set(normalize(url), (counts.get(normalize(url)) ?? 0) + 1);
+  for (const sitemap of context.sitemaps.filter(item => !['index', 'invalid'].includes(item.kind))) for (const url of sitemap.urls) counts.set(normalize(url), (counts.get(normalize(url)) ?? 0) + 1);
   return ![...counts.values()].some(count => count > 1);
 });
 
@@ -181,6 +181,13 @@ add(['OTH-007'], context => !hasRedirectLoop(context.robots.response.redirects) 
 add(['OTH-008'], context => context.robots.response.status === 200);
 add(['OTH-012'], context => issueFree(htmlPages(context), page => [...new URL(page.url).searchParams].length > 3));
 add(['OTH-017'], context => issueFree(htmlPages(context), page => context.robots.disallows('*', page.url)));
+
+add(['FAC-001'], context => issueFree(htmlPages(context), page => duplicateQueryParameter(page.url)));
+add(['FAC-002'], context => {
+  const pages = htmlPages(context).filter(page => new URL(page.url).search);
+  const groups = groupBy(pages, page => querySignature(page.url));
+  return ![...groups.values()].some(items => new Set(items.map(page => new URL(page.url).search)).size > 1);
+});
 
 add(['GSA-006'], context => issueFree(indexablePages(context), page => directive(page, 'nosnippet')));
 add(['GSA-007'], context => issueFree(indexablePages(context), page => page.robots.some(value => /^max-snippet:(?:0|-?\D|-[2-9])/.test(value))));
@@ -561,7 +568,7 @@ function sitemapPageCheck(context, issue) {
 }
 
 function sitemapUrls(context) {
-  return new Set(context.sitemaps.filter(item => item.kind === 'urlset').flatMap(item => item.urls.map(normalize)));
+  return new Set(context.sitemaps.filter(item => !['index', 'invalid'].includes(item.kind)).flatMap(item => item.urls.map(normalize)));
 }
 
 function sitemapScope(value, sitemap) {
@@ -693,6 +700,16 @@ function normalize(value) {
     if (url.pathname !== '/') url.pathname = url.pathname.replace(/\/$/, '');
     return url.href;
   } catch { return String(value); }
+}
+
+function duplicateQueryParameter(value) {
+  const keys = [...new URL(value).searchParams.keys()];
+  return new Set(keys).size !== keys.length;
+}
+
+function querySignature(value) {
+  const url = new URL(value);
+  return `${url.origin}${url.pathname}?${[...url.searchParams].sort(([aKey, aValue], [bKey, bValue]) => aKey.localeCompare(bKey) || aValue.localeCompare(bValue)).map(([key, item]) => `${encodeURIComponent(key)}=${encodeURIComponent(item)}`).join('&')}`;
 }
 
 function unique(items) {
