@@ -14,7 +14,7 @@ const MAX_EXTERNAL = 10_000;
 const PAGE_CONCURRENCY = 12;
 const FETCH_BATCH_SIZE = 20;
 const FETCH_CONCURRENCY = 6;
-const OPTIONAL_CODES = new Set(['PRD-002', 'PRD-003']);
+const OPTIONAL_CODES = new Set(['GPI-006', 'IDX-005', 'IDX-006', 'IDX-010', 'IDX-015', 'PRD-002', 'PRD-003', 'RED-004', 'RED-007']);
 const liveRows = new WeakMap();
 let run = 0;
 let reportUrl = '';
@@ -89,7 +89,7 @@ form.addEventListener('submit', async event => {
       loadPerformance(bootstrap.root, pageData.pages).catch(error => ({ error: error.message, pages: [], crux: null }))
     ]);
     ensureCurrent(current);
-    applyGraphChecks(failures, pageData.pages, sitemapItems, sitemapUrls, bootstrap.root, origin, resourceFacts);
+    applyGraphChecks(failures, pageData.pages, sitemapItems, sitemapUrls, bootstrap.root, origin, resourceFacts, bootstrap.robotsGroups);
     applyPerformanceFailures(failures, performance);
     finishRows(rows, failures);
     showSummary(pageData.count, rows.size, failures, pageData.limitReached);
@@ -295,6 +295,8 @@ function applyResourceFailures(failures, item, owners) {
     if (item.status === 500) addFailure(failures, 'HTTP-003', item.url);
     if (item.status >= 500) addFailure(failures, 'HTTP-004', item.url);
     if (item.error === 'timeout') addFailure(failures, 'HTTP-005', item.url);
+    if (/(?:^|[,\s])noindex(?:[,\s]|$)/i.test(item.xRobotsTag)) addMany(failures, ['IDX-005', 'AIX-006'], [item.url]);
+    if (item.status >= 200 && item.status < 300 && item.contentLength === 0) addFailure(failures, 'GPI-005', item.url);
     if (broken) addMany(failures, ['LNK-004', 'LNK-015'], owners);
     if (redirect) addMany(failures, ['LNK-006', 'LNK-019'], owners);
   }
@@ -302,7 +304,7 @@ function applyResourceFailures(failures, item, owners) {
   if ((kind('css') || kind('js')) && item.contentLength > 1_000 && !/(?:br|gzip|deflate|zstd)/i.test(item.contentEncoding)) addMany(failures, ['UXP-006'], owners);
 }
 
-function applyGraphChecks(failures, pagesMap, sitemaps, sitemapUrls, root, origin, resourceFacts) {
+function applyGraphChecks(failures, pagesMap, sitemaps, sitemapUrls, root, origin, resourceFacts, robotsGroups) {
   const pages = uniqueObjects([...pagesMap.values()]);
   const responses = new Map();
   for (const page of pages) {
@@ -340,18 +342,27 @@ function applyGraphChecks(failures, pagesMap, sitemaps, sitemapUrls, root, origi
   for (const url of new Set(indexable.flatMap(page => page.canonical.map(normalize)))) if (!(incoming.get(url)?.length)) addFailure(failures, 'LNK-001', url);
   applyCanonicalChecks(failures, indexable, responses);
   applyDuplicateChecks(failures, indexable);
+  applyRobotsChecks(failures, pages, robotsGroups);
   applyFacetChecks(failures, pages);
   applyHreflangChecks(failures, pages, responses);
   applySitemapChecks(failures, sitemaps, sitemapUrls, responses, indexable);
 }
 
 function applyCanonicalChecks(failures, pages, responses) {
-  for (const page of pages) for (const canonical of page.canonical) {
-    const target = responses.get(normalize(canonical));
-    if (target?.status >= 400 && target.status < 500) addFailure(failures, 'IDX-001', page.url);
-    if (target?.status >= 500) addFailure(failures, 'IDX-002', page.url);
-    if (target?.redirects?.length) addFailure(failures, 'IDX-003', page.url);
-    if (target?.canonical?.[0] && normalize(target.canonical[0]) !== normalize(target.url)) addFailure(failures, 'IDX-009', page.url);
+  for (const page of pages) {
+    if (new Set(page.canonical.map(normalize)).size > 1) addFailure(failures, 'GPI-007', page.url);
+    for (const canonical of page.canonical) {
+      const target = responses.get(normalize(canonical));
+      if (target?.status >= 400 && target.status < 500) addFailure(failures, 'IDX-001', page.url);
+      if (target?.status >= 500) addFailure(failures, 'IDX-002', page.url);
+      if (target?.redirects?.length) addFailure(failures, 'IDX-003', page.url);
+      if (target?.canonical?.[0] && normalize(target.canonical[0]) !== normalize(target.url)) addFailure(failures, 'IDX-009', page.url);
+      if (normalize(canonical) === normalize(page.url) || !target || target.status < 200 || target.status >= 300 || target.redirects?.length) continue;
+      const targetCanonical = normalize(target.canonical?.[0] ?? target.url);
+      const equivalent = page.fingerprint && target.fingerprint && similarText(page.fingerprint, target.fingerprint);
+      if (equivalent && targetCanonical === normalize(target.url)) addFailure(failures, 'GPI-006', page.url);
+      else if (page.fingerprint && target.fingerprint && !equivalent) addFailure(failures, 'GPI-007', page.url);
+    }
   }
 }
 
@@ -359,8 +370,35 @@ function applyDuplicateChecks(failures, pages) {
   const groups = groupBy(pages.filter(page => page.fingerprint), page => page.fingerprint);
   for (const duplicates of groups.values()) if (duplicates.length > 1) {
     for (const page of duplicates.filter(item => !item.canonical.length)) addMany(failures, ['DUP-001', 'AIX-015'], [page.url]);
+    if (new Set(duplicates.map(page => normalize(page.canonical[0] ?? page.url))).size > 1) for (const page of duplicates) addFailure(failures, 'GPI-007', page.url);
     if (duplicates.some(page => page.structured) && duplicates.some(page => !page.structured)) for (const page of duplicates.filter(item => !item.structured)) addFailure(failures, 'SDG-005', page.url);
   }
+}
+
+function applyRobotsChecks(failures, pages, groups = []) {
+  for (const page of pages) if (robotsDisallows(groups, 'googlebot', page.url)) addFailure(failures, 'AIX-002', page.url);
+}
+
+function robotsDisallows(groups, agent, value) {
+  const path = `${new URL(value).pathname}${new URL(value).search}`;
+  const candidates = groups.filter(group => group.agents.some(item => item === '*' || agent.includes(item)));
+  const specific = candidates.filter(group => group.agents.some(item => item !== '*'));
+  const matches = (specific.length ? specific : candidates).flatMap(group => group.rules).filter(rule => rule.path && robotsPattern(rule.path).test(path)).sort((a, b) => b.path.length - a.path.length);
+  return matches[0]?.type === 'disallow';
+}
+
+function robotsPattern(path) {
+  const end = path.endsWith('$');
+  const escaped = path.replace(/\$$/, '').replace(/[.+?^${}()|[\]\\]/g, '\\$&').replaceAll('*', '.*');
+  return new RegExp(`^${escaped}${end ? '$' : ''}`);
+}
+
+function similarText(left, right) {
+  const words = value => new Set(String(value).toLowerCase().replace(/\d+/g, '#').match(/[\p{L}\p{N}#]{3,}/gu) ?? []);
+  const [a, b] = [words(left), words(right)];
+  if (!a.size || !b.size) return String(left).trim() === String(right).trim();
+  const common = [...a].filter(word => b.has(word)).length;
+  return common / Math.max(a.size, b.size) >= 0.8;
 }
 
 function applyFacetChecks(failures, pages) {

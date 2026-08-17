@@ -8,9 +8,11 @@ const FETCH_BATCH = 20;
 export async function bootstrapSite(value) {
   const start = publicUrl(value);
   const robotsUrl = new URL('/robots.txt', start).href;
-  const [first, robotsResponse, ...botResponses] = await Promise.all([
+  const missingUrl = new URL(`/.well-known/seo-audit-not-found-${crypto.randomUUID()}`, start).href;
+  const [first, robotsResponse, missing, ...botResponses] = await Promise.all([
     fetchLimited(start, { maxBytes: 100_000 }),
     fetchLimited(robotsUrl, { maxBytes: 600_000, accept: 'text/plain,*/*;q=0.5', forceText: true }),
+    fetchLimited(missingUrl, { maxBytes: 100_000 }),
     ...Object.values(BOT_AGENTS).map(userAgent => fetchLimited(start, { userAgent, maxBytes: 100_000 }))
   ]);
   if (!first.status && first.error) throw new Error('Não foi possível aceder ao URL indicado.');
@@ -21,6 +23,7 @@ export async function bootstrapSite(value) {
     finalUrl: first.finalUrl,
     origin,
     first,
+    missing,
     robots,
     bots: Object.fromEntries(Object.keys(BOT_AGENTS).map((name, index) => [name, botResponses[index]])),
     sitemapSeeds: [...new Set([...robots.sitemaps, new URL('/sitemap.xml', origin).href])]
@@ -184,6 +187,7 @@ function publicResponse(response) {
     redirects: response.redirects,
     contentLength: response.contentLength,
     contentType: response.contentType,
+    xRobotsTag: response.headers['x-robots-tag'] ?? '',
     contentEncoding: response.headers['content-encoding'] ?? '',
     elapsedMs: response.elapsedMs,
     truncated: response.truncated

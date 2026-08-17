@@ -48,8 +48,15 @@ export async function fetchLimited(value, options = {}) {
         signal: AbortSignal.timeout(options.timeout ?? 8_000)
       });
       const status = response.status;
-      if (status >= 300 && status < 400 && response.headers.has('location')) {
-        const next = publicUrl(response.headers.get('location'), url);
+      if (status >= 300 && status < 400) {
+        const location = response.headers.get('location');
+        if (!location) return failure(value, started, redirects, 'redirect_missing_location', status, url.href);
+        let next;
+        try {
+          next = publicUrl(location, url);
+        } catch {
+          return failure(value, started, redirects, 'redirect_invalid_location', status, url.href);
+        }
         redirects.push({ from: url.href, to: next.href, status });
         url = next;
         continue;
@@ -121,9 +128,9 @@ function number(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function failure(value, started, redirects, error) {
+function failure(value, started, redirects, error, status = 0, finalUrl = redirects.at(-1)?.to ?? String(value)) {
   return {
-    requestedUrl: String(value), finalUrl: redirects.at(-1)?.to ?? String(value), status: 0,
+    requestedUrl: String(value), finalUrl, status,
     headers: {}, contentType: '', contentLength: 0, bytes: new Uint8Array(), text: '', truncated: false,
     redirects, elapsedMs: Date.now() - started, error
   };

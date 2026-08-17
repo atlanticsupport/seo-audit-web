@@ -1,22 +1,22 @@
-# Matriz de automatização dos 420 pontos SEO
+# Matriz de automatização dos 427 pontos SEO
 
 ## Resultado
 
-Todos os 420 códigos do catálogo foram classificados individualmente segundo o tipo mínimo de execução necessário para produzir uma conclusão defensável.
+Todos os 427 códigos do catálogo foram classificados individualmente segundo o tipo mínimo de execução necessário para produzir uma conclusão defensável.
 
 | Classe | Significado | Total | Problemas | Funções |
 |---|---|---:|---:|---:|
-| A | Automatização local direta: código, HTTP, HTML, DOM renderizado, recursos, grafo interno ou validação estrutural. | 293 | 290 | 3 |
+| A | Automatização local direta: código, HTTP, HTML, DOM renderizado, recursos, grafo interno ou validação estrutural. | 300 | 297 | 3 |
 | B | Automatização com histórico: o teste é determinístico, mas exige duas ou mais observações persistidas. | 16 | 15 | 1 |
 | C | Automatização com fonte externa: exige API, feed, ferramenta ou fornecedor de dados, mas pode ser executado sem julgamento humano depois de configurado. | 39 | 30 | 9 |
 | D | Verificação híbrida: o script recolhe, mede e sinaliza candidatos, mas uma LLM ou pessoa precisa avaliar significado, veracidade, utilidade, intenção ou decisão comercial. | 72 | 62 | 10 |
-| **Total** |  | **420** | **397** | **23** |
+| **Total** |  | **427** | **404** | **23** |
 
 Conclusões:
 
-- **293 pontos, 69,8%, podem ser automatizados imediatamente** com um auditor local bem construído.
-- **309 pontos, 73,6%, ficam automatizados** quando o auditor também guardar snapshots históricos.
-- **348 pontos, 82,9%, ficam automatizados** quando forem acrescentados os adaptadores externos necessários.
+- **300 pontos, 70,3%, podem ser automatizados imediatamente** com um auditor local bem construído.
+- **316 pontos, 74,0%, ficam automatizados** quando o auditor também guardar snapshots históricos.
+- **355 pontos, 83,1%, ficam automatizados** quando forem acrescentados os adaptadores externos necessários.
 - Os restantes **72 pontos não devem receber aprovação automática**. O script pode produzir evidência e candidatos, mas a decisão final é semântica ou comercial.
 
 Esta classificação avalia automatizabilidade, não aplicabilidade a um site concreto. Um detector só pode aprovar um código depois de implementar integralmente os critérios atómicos presentes no catálogo, possuir fixtures positivas e negativas e guardar evidência reproduzível.
@@ -39,7 +39,7 @@ Não criar 420 crawlers nem selecionar testes por palavras existentes nos nomes.
 
 ## Classe A — automatização local direta
 
-Estes 293 pontos devem ter detectores determinísticos dedicados. Um único crawl pode fornecer dados a vários detectores, mas cada código conserva critérios, fixtures, resultado e evidência próprios.
+Estes 300 pontos devem ter detectores determinísticos dedicados. Um único crawl pode fornecer dados a vários detectores, mas cada código conserva critérios, fixtures, resultado e evidência próprios.
 
 - **`VideoObject` (2):** VDO-001, VDO-002
 - **Alojamentos de férias (3):** VAC-001, VAC-002, VAC-003
@@ -59,6 +59,7 @@ Estes 293 pontos devem ter detectores determinísticos dedicados. Um único craw
 - **External pages (4):** EXT-001, EXT-002, EXT-003, EXT-004
 - **Funcionalidades Google especializadas (1):** FEA-002
 - **Google Images e Discover (4):** GIM-001, GIM-002, GIM-003, GIM-004
+- **Google Page Indexing — sinais verificáveis (7):** GPI-001, GPI-002, GPI-003, GPI-004, GPI-005, GPI-006, GPI-007
 - **Identidade visual e nome do site (4):** IDN-001, IDN-002, IDN-003, IDN-004
 - **Images (7):** IMG-001, IMG-002, IMG-003, IMG-004, IMG-005, IMG-006, IMG-007
 - **Indexability (13):** IDX-001, IDX-002, IDX-003, IDX-004, IDX-005, IDX-006, IDX-007, IDX-008, IDX-009, IDX-010, IDX-011, IDX-012, IDX-015
@@ -256,7 +257,7 @@ Nestes 72 pontos o script deve recolher factos, calcular sinais e ordenar candid
 
 ### Versão 1 — maior retorno com menor complexidade
 
-Implementar primeiro a classe A, exceto renderização pesada de vídeo/Web Stories quando o projeto não possuir esses tipos. O mesmo crawl deve alimentar HTTP, metadados, links, sitemaps, robots, recursos, localization e dados estruturados. Isto cobre 293 pontos sem armazenamento remoto.
+Implementar primeiro a classe A, exceto renderização pesada de vídeo/Web Stories quando o projeto não possuir esses tipos. O mesmo crawl deve alimentar HTTP, metadados, links, sitemaps, robots, recursos, localization e dados estruturados. Isto cobre 300 pontos sem armazenamento remoto.
 
 ### Versão 2 — snapshots locais
 

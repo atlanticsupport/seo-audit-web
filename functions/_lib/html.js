@@ -38,7 +38,9 @@ export function parsePage(response) {
     if (entries) entries.push(node);
     else structuredByType.set(type, [node]);
   }
-  const visibleText = text(html.replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' '));
+  const withoutExecutableContent = value => value.replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ');
+  const visibleText = text(withoutExecutableContent(html));
+  const bodyText = text(withoutExecutableContent(pairedTags(html, 'body')[0]?.body ?? html));
 
   return {
     ...response,
@@ -70,6 +72,7 @@ export function parsePage(response) {
     structuredNodes,
     structuredByType,
     visibleText,
+    bodyText,
     viewport: metas.find(meta => meta.name?.toLowerCase() === 'viewport')?.content ?? '',
     refresh: metas.find(meta => meta['http-equiv']?.toLowerCase() === 'refresh')?.content ?? '',
     og: Object.fromEntries(metas.filter(meta => meta.property?.startsWith('og:')).map(meta => [meta.property.toLowerCase(), meta.content ?? ''])),

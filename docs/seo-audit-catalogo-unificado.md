@@ -714,6 +714,78 @@ This is a notice that the "noindex" directive has been removed from some pages a
 
 Review affected pages and ensure that they should indeed be indexed by search engines.
 
+## Categoria: Google Page Indexing — sinais verificáveis
+
+### GPI-001 / Soft 404
+
+**Detalhes do problema:**
+
+O servidor devolve HTTP 2xx, ou redireciona para uma página genérica, para um URL que não existe. Também é um sinal forte quando uma resposta 2xx apresenta no `title`, H1 ou conteúdo principal uma mensagem inequívoca de página, produto ou resultado não encontrado. O Google pode tratar estas respostas como `Soft 404` e excluí-las do índice.
+
+**Solução:**
+
+Devolver HTTP 404 ou 410 quando não existe substituto. Quando o conteúdo mudou para um URL equivalente, devolver um único redirect permanente para esse URL, nunca para a homepage ou para uma página genérica. [Referência oficial](https://support.google.com/webmasters/answer/7440203?hl=en#soft_404).
+
+### GPI-002 / Blocked due to unauthorized request (401)
+
+**Detalhes do problema:**
+
+Um URL público descoberto pelo crawler devolve HTTP 401 e exige autenticação. O Googlebot não fornece credenciais e não consegue indexar o conteúdo protegido.
+
+**Solução:**
+
+Remover a autenticação apenas das páginas que devem ser públicas e indexáveis. Manter HTTP 401 nas áreas privadas e remover essas URLs de sitemaps e links públicos. [Referência oficial](https://support.google.com/webmasters/answer/7440203?hl=en#unauthorized_request).
+
+### GPI-003 / Blocked due to access forbidden (403)
+
+**Detalhes do problema:**
+
+Um URL público devolve HTTP 403 ao crawler. A causa pode ser WAF, firewall, CDN, regra geográfica, bloqueio por user-agent, rate limit ou autorização incorreta.
+
+**Solução:**
+
+Permitir acesso sem autenticação às páginas que devem ser indexadas e validar o Googlebot por mecanismos oficiais quando existir uma exceção de firewall. Manter páginas privadas fora de sitemaps e links públicos. [Referência oficial](https://support.google.com/webmasters/answer/7440203?hl=en#access_forbidden).
+
+### GPI-004 / URL blocked due to other 4xx issue
+
+**Detalhes do problema:**
+
+Um URL descoberto devolve um estado HTTP 4xx diferente de 401, 403 e 404. Respostas como 400, 405, 408, 410, 429 ou 451 impedem o Googlebot de obter conteúdo indexável e exigem interpretação segundo a finalidade do URL.
+
+**Solução:**
+
+Devolver HTTP 200 apenas para conteúdo público existente, 301 ou 308 para uma mudança permanente inequívoca e 404 ou 410 para conteúdo removido sem substituto. Corrigir rate limits, métodos, WAF ou restrições legais indevidas; remover URLs intencionalmente indisponíveis de sitemaps e links internos. [Referência oficial](https://support.google.com/webmasters/answer/7440203?hl=en#other_4xx).
+
+### GPI-005 / Página 2xx sem conteúdo indexável
+
+**Detalhes do problema:**
+
+Uma resposta HTML 2xx não contém texto principal, título, H1 nem dados estruturados úteis, ou entrega apenas um contentor vazio dependente de JavaScript. O crawler consegue obter o documento, mas não encontra conteúdo suficiente para processar e indexar.
+
+**Solução:**
+
+Entregar no HTML inicial o conteúdo principal, `title`, H1, links e dados estruturados aplicáveis através de SSR, SSG ou renderização no servidor. Devolver um estado de erro correto quando não existir conteúdo e confirmar que recursos essenciais não estão bloqueados. [Referência oficial](https://support.google.com/webmasters/answer/7440203?hl=en#indexed_without_content).
+
+### GPI-006 / Alternate page with proper canonical tag
+
+**Detalhes do problema:**
+
+Uma página duplicada ou alternativa declara canonical para outro URL interno que devolve HTTP 200, não redireciona, é autorreferente e contém conteúdo equivalente. Esta exclusão é normalmente intencional e deve ser apresentada como informação, não como erro.
+
+**Solução:**
+
+Manter a configuração quando o URL de destino for realmente a versão preferida. Ligar internamente e incluir no sitemap apenas a canonical; corrigir a relação quando as páginas tiverem intenções ou conteúdos diferentes. [Referência oficial](https://support.google.com/webmasters/answer/7440203?hl=en#alternate_page_with_proper_canonical_tag).
+
+### GPI-007 / Sinais de canonical contraditórios
+
+**Detalhes do problema:**
+
+Existem vários canonicals no mesmo documento, uma canonical aponta para conteúdo materialmente diferente, ou páginas duplicadas apresentam URLs canonical concorrentes. Estes sinais tornam provável que o Google ignore a canonical declarada e escolha outra URL.
+
+**Solução:**
+
+Emitir exatamente uma canonical absoluta por página. Duplicados devem apontar para a mesma versão preferida; essa versão deve devolver HTTP 200, ser autorreferente e coincidir com links internos, sitemap, hreflang e redirects. Páginas com intenção própria devem usar canonical autorreferente e conteúdo suficientemente distinto. [Referência oficial](https://developers.google.com/search/docs/crawling-indexing/canonicalization).
+
 ## Categoria: Links
 
 ### LNK-001 / Canonical URL has no incoming internal links

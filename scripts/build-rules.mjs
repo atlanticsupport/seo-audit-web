@@ -30,7 +30,7 @@ for (let index = 0; index < headings.length; index++) {
   });
 }
 
-if (rules.length !== 290) throw new Error(`Esperados 290 problemas diretos; encontrados ${rules.length}.`);
+if (rules.length !== 297) throw new Error(`Esperados 297 problemas diretos; encontrados ${rules.length}.`);
 
 const output = `// Gerado a partir de docs/seo-audit-catalogo-unificado.md. Não editar.\nexport const RULES = ${JSON.stringify(rules, null, 2)};\n`;
 await writeFile(new URL('../functions/_lib/rules.generated.js', import.meta.url), output);

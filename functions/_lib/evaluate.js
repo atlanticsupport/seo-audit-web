@@ -60,6 +60,22 @@ add(['IDX-011'], context => issueFree(htmlPages(context), page => page.url.start
 add(['IDX-012'], context => issueFree(htmlPages(context), page => page.url.startsWith('https:') && page.canonical.some(url => url.startsWith('http:'))));
 add(['IDX-015'], context => issueFree(htmlPages(context), page => directive(page, 'noindex') && directive(page, 'nofollow')));
 
+add(['GPI-001'], context => issueFree(htmlPages(context), soft404Page));
+add(['GPI-002'], context => issueFree(internalResponses(context), response => response.status === 401));
+add(['GPI-003'], context => issueFree(internalResponses(context), response => response.status === 403));
+add(['GPI-004'], context => issueFree(internalResponses(context), response => response.status >= 400 && response.status < 500 && ![401, 403, 404].includes(response.status)));
+add(['GPI-005'], context => issueFree(htmlPages(context), emptyIndexablePage));
+add(['GPI-006'], context => {
+  const alternatives = htmlPages(context).filter(page => page.canonical.some(canonical => normalize(canonical) !== normalize(page.url)));
+  return issueFree(alternatives, page => properAlternate(context, page), alternatives.length > 0);
+});
+add(['GPI-007'], context => issueFree(htmlPages(context), page => {
+  if (new Set(page.canonical.map(normalize)).size > 1) return true;
+  const canonical = page.canonical.find(value => normalize(value) !== normalize(page.url));
+  const target = canonical && htmlPages(context).find(item => normalize(item.url) === normalize(canonical));
+  return Boolean(target?.bodyText && page.bodyText && !similarText(target.bodyText, page.bodyText));
+}));
+
 add(['CNT-001', 'CNT-020'], context => issueFree(indexablePages(context), page => page.descriptions.length > 1));
 add(['CNT-002', 'CNT-021'], context => issueFree(indexablePages(context), page => page.titles.length > 1));
 add(['CNT-003', 'CNT-022'], context => issueFree(indexablePages(context), page => page.titles.length === 0 || page.titles.some(title => !title)));
@@ -202,6 +218,7 @@ add(['AIX-005'], context => issueFree(Object.values(context.bots), blockedBot));
 add(['AIX-006'], context => issueFree(htmlPages(context), page => directive(page, 'noindex')));
 add(['AIX-007'], context => issueFree(htmlPages(context), page => directive(page, 'nosnippet') || page.robots.includes('max-snippet:0') || page.dataNosnippet > 0));
 add(['AIX-008'], context => issueFree(htmlPages(context), page => contradictoryDirectives(page.htmlRobots, page.headerRobots)));
+add(['AIX-009'], context => issueFree(htmlPages(context), scriptDependentPage));
 add(['AIX-012'], context => issueFree(htmlPages(context), page => (page.canonical[0] && normalize(page.canonical[0]) !== normalize(page.url)) || page.redirects.length > 1));
 add(['AIX-013'], context => {
   const urls = sitemapUrls(context);
@@ -626,6 +643,36 @@ function blockedBot(response) {
 
 function contradictoryDirectives(html, header) {
   return (html.includes('index') && header.includes('noindex')) || (html.includes('noindex') && header.includes('index')) || (html.includes('follow') && header.includes('nofollow')) || (html.includes('nofollow') && header.includes('follow'));
+}
+
+function soft404Page(page) {
+  const heading = `${page.titles.join(' ')} ${page.h1.join(' ')}`;
+  const missing = /(?:\b404\b|not found|p[aá]gina n[aã]o encontrada|produto n[aã]o encontrado|conte[uú]do indispon[ií]vel|nenhum resultado|no results?)/i;
+  return page.status >= 200 && page.status < 300 && (missing.test(heading) || page.wordCount < 60 && missing.test(page.bodyText));
+}
+
+function emptyIndexablePage(page) {
+  return !directive(page, 'noindex') && page.bodyText.split(/\s+/).filter(Boolean).length < 5 && !page.h1.length && !page.structuredNodes.length;
+}
+
+function scriptDependentPage(page) {
+  return page.bodyText.split(/\s+/).filter(Boolean).length < 20 && page.scripts.length > 0 && /\bid=["'](?:root|app|__next|__nuxt|svelte)["']/i.test(page.text);
+}
+
+function properAlternate(context, page) {
+  const canonical = page.canonical.find(value => normalize(value) !== normalize(page.url));
+  const target = canonical && htmlPages(context).find(item => normalize(item.url) === normalize(canonical));
+  if (!target || target.status < 200 || target.status >= 300 || redirected(target)) return false;
+  const targetCanonical = normalize(target.canonical[0] ?? target.url);
+  return targetCanonical === normalize(target.url) && similarText(page.bodyText, target.bodyText);
+}
+
+function similarText(left, right) {
+  const words = value => new Set(String(value).toLowerCase().replace(/\d+/g, '#').match(/[\p{L}\p{N}#]{3,}/gu) ?? []);
+  const [a, b] = [words(left), words(right)];
+  if (!a.size || !b.size) return String(left).trim() === String(right).trim();
+  const common = [...a].filter(word => b.has(word)).length;
+  return common / Math.max(a.size, b.size) >= 0.8;
 }
 
 function homePage(context) {

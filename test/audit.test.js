@@ -8,16 +8,16 @@ import { publicUrl } from '../functions/_lib/net.js';
 import { evaluate, supportedCodes } from '../functions/_lib/evaluate.js';
 import { RULES } from '../functions/_lib/rules.generated.js';
 
-test('o registo contém 290 problemas diretos e 275 detetores executáveis neste runtime', () => {
-  assert.equal(RULES.length, 290);
-  assert.equal(new Set(RULES.map(rule => rule.code)).size, 290);
-  assert.equal(supportedCodes().length, 275);
+test('o registo contém 297 problemas diretos e 283 detetores executáveis neste runtime', () => {
+  assert.equal(RULES.length, 297);
+  assert.equal(new Set(RULES.map(rule => rule.code)).size, 297);
+  assert.equal(supportedCodes().length, 283);
   assert.ok(supportedCodes().every(code => RULES.some(rule => rule.code === code)));
 });
 
-test('a interface recebe apenas as 275 regras com detetor', async () => {
+test('a interface recebe apenas as 283 regras com detetor', async () => {
   const rules = JSON.parse(await readFile(new URL('../public/supported-rules.json', import.meta.url), 'utf8'));
-  assert.equal(rules.length, 275);
+  assert.equal(rules.length, 283);
   assert.deepEqual(rules.map(rule => rule.code).sort(), supportedCodes());
 });
 
@@ -66,6 +66,7 @@ test('bootstrap devolve JSON sem analisar novamente o HTML completo', async t =>
     const agent = headers.get('user-agent') ?? '';
     assert.equal(headers.get('accept-encoding'), 'br, gzip');
     if (url.endsWith('/robots.txt')) return new Response('User-agent: *\nAllow: /', { status: 200, headers: { 'content-type': 'text/plain' } });
+    if (url.includes('/.well-known/seo-audit-not-found-')) return new Response('Não encontrado', { status: 404, headers: { 'content-type': 'text/html' } });
     return new Response('<!doctype html><title>Teste</title>', { status: agent.includes('OAI-SearchBot') ? 403 : 200, headers: { 'content-type': 'text/html' } });
   };
   t.after(() => { globalThis.fetch = originalFetch; });
@@ -154,6 +155,33 @@ test('fixture válida e mutações mínimas produzem resultados distintos', () =
 
   const conflicting = resultMap(context(page('<html lang="pt"><head><link rel="alternate" hreflang="pt-PT" href="https://example.com/"><link rel="alternate" hreflang="en-GB" href="https://example.com/"></head></html>')));
   assert.equal(conflicting.get('LOC-008'), false);
+});
+
+test('estados verificáveis do Page Indexing são classificados pelo código atual', () => {
+  const soft404 = resultMap(context(page('<html><head><title>404 — Página não encontrada</title></head><body>Não existe.</body></html>')));
+  assert.equal(soft404.get('GPI-001'), false);
+
+  const empty = resultMap(context(page('<html lang="pt"><head><title></title></head><body><div></div></body></html>')));
+  assert.equal(empty.get('GPI-005'), false);
+
+  const shell = resultMap(context(page('<html lang="pt"><body><div id="root"></div><script src="/app.js"></script></body></html>')));
+  assert.equal(shell.get('AIX-009'), false);
+
+  for (const [status, code] of [[401, 'GPI-002'], [403, 'GPI-003'], [410, 'GPI-004']]) {
+    const response = page('<html><body>Erro</body></html>');
+    response.status = status;
+    assert.equal(resultMap(context(response)).get(code), false);
+  }
+
+  const canonical = page('<html><head><link rel="canonical" href="https://example.com/preferida"></head><body>Conteúdo duplicado estável para testar canonical.</body></html>', 'https://example.com/alternativa');
+  const preferred = page('<html><head><link rel="canonical" href="https://example.com/preferida"></head><body>Conteúdo duplicado estável para testar canonical.</body></html>', 'https://example.com/preferida');
+  const canonicalContext = context(canonical);
+  canonicalContext.pages = [canonical, preferred];
+  canonicalContext.pageResponses = new Map(canonicalContext.pages.map(item => [item.url, item]));
+  assert.equal(resultMap(canonicalContext).get('GPI-006'), false);
+
+  canonical.canonical.push('https://example.com/outra');
+  assert.equal(resultMap(canonicalContext).get('GPI-007'), false);
 });
 
 test('sitemaps XML, RSS, Atom e texto são aceites', () => {

@@ -116,12 +116,14 @@ async function bootstrap(url) {
     ['AIX-002', data.robots.disallows('googlebot', data.finalUrl), robotsUrl],
     ['AIX-003', data.robots.disallows('oai-searchbot', data.finalUrl) || blockedBot(data.bots.oaiSearchBot), data.finalUrl],
     ['AIX-004', data.robots.disallows('perplexitybot', data.finalUrl) || blockedBot(data.bots.perplexityBot), data.finalUrl],
-    ['AIX-005', Object.values(data.bots).some(blockedBot), data.finalUrl]
+    ['AIX-005', Object.values(data.bots).some(blockedBot), data.finalUrl],
+    ['GPI-001', soft404Response(data.missing), data.missing.requestedUrl]
   ].filter(([, failed]) => failed).map(([code, , target]) => ({ code, urls: [target] }));
   return {
     root: data.finalUrl,
     origin: data.origin,
     sitemapSeeds: data.sitemapSeeds,
+    robotsGroups: data.robots.groups,
     failures,
     supportedCodes: supportedCodes()
   };
@@ -157,6 +159,11 @@ function statusFailure(code, response) {
   if (code === 'HTTP-003') return response.status === 500;
   if (code === 'HTTP-004') return response.status >= 500;
   if (code === 'HTTP-005') return response.error === 'timeout';
+  if (code === 'GPI-001') return soft404Summary(response);
+  if (code === 'GPI-002') return response.status === 401;
+  if (code === 'GPI-003') return response.status === 403;
+  if (code === 'GPI-004') return response.status >= 400 && response.status < 500 && ![401, 403, 404].includes(response.status);
+  if (code === 'GPI-005') return response.status >= 200 && response.status < 300 && response.isHtml && response.wordCount < 5 && !response.title && !response.h1 && !response.structured;
   if (code === 'RED-001') return response.error || response.redirects.length && response.status >= 400;
   if (code === 'RED-002') return response.error === 'redirect_limit' || response.redirects.length > 5;
   if (code === 'RED-003') return redirectLoop(response.redirects);
@@ -166,6 +173,14 @@ function statusFailure(code, response) {
   if (code === 'RED-007') return response.redirects.some(item => item.from.startsWith('http:') && item.to.startsWith('https:'));
   if (code === 'RED-008') return response.redirects.length > 1;
   return false;
+}
+
+function soft404Response(response) {
+  return response.status >= 200 && response.status < 300 && !blockedBot(response);
+}
+
+function soft404Summary(response) {
+  return response.status >= 200 && response.status < 300 && /(?:\b404\b|not found|p[aá]gina n[aã]o encontrada|produto n[aã]o encontrado|nenhum resultado|no results?)/i.test(`${response.title} ${response.h1}`);
 }
 
 function redirectLoop(redirects) {
