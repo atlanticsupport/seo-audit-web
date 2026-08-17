@@ -2,22 +2,53 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { onRequest } from '../functions/api/audit.js';
+import { parseSitemap } from '../functions/_lib/collect.js';
 import { parsePage } from '../functions/_lib/html.js';
 import { publicUrl } from '../functions/_lib/net.js';
 import { evaluate, supportedCodes } from '../functions/_lib/evaluate.js';
 import { RULES } from '../functions/_lib/rules.generated.js';
 
-test('o registo contém 288 problemas diretos e 273 detetores executáveis neste runtime', () => {
-  assert.equal(RULES.length, 288);
-  assert.equal(new Set(RULES.map(rule => rule.code)).size, 288);
-  assert.equal(supportedCodes().length, 273);
+test('o registo contém 290 problemas diretos e 275 detetores executáveis neste runtime', () => {
+  assert.equal(RULES.length, 290);
+  assert.equal(new Set(RULES.map(rule => rule.code)).size, 290);
+  assert.equal(supportedCodes().length, 275);
   assert.ok(supportedCodes().every(code => RULES.some(rule => rule.code === code)));
 });
 
-test('a interface recebe apenas as 273 regras com detetor', async () => {
+test('a interface recebe apenas as 275 regras com detetor', async () => {
   const rules = JSON.parse(await readFile(new URL('../public/supported-rules.json', import.meta.url), 'utf8'));
-  assert.equal(rules.length, 273);
+  assert.equal(rules.length, 275);
   assert.deepEqual(rules.map(rule => rule.code).sort(), supportedCodes());
+});
+
+test('a interface respeita a CSP sem estilos inline', async () => {
+  const [html, app] = await Promise.all([
+    readFile(new URL('../public/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/app.js', import.meta.url), 'utf8')
+  ]);
+  assert.doesNotMatch(html, /\sstyle=/i);
+  assert.doesNotMatch(app, /\.style\.|setAttribute\(['"]style/);
+});
+
+test('o relatório para LLM exporta só findings e referencia URLs sem repetição', async () => {
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  const source = app.slice(app.indexOf('function buildReport'), app.indexOf('function resetRanking'));
+  const buildReport = Function('OPTIONAL_CODES', 'clean', `${source}; return buildReport;`)(new Set(['OPT']), value => String(value ?? '').replace(/\s+/g, ' ').trim());
+  const report = buildReport({
+    site: 'https://example.com/', pages: 2, pagesMap: new Map(), limited: false, gsc: null, serp: null, comparisons: [],
+    rules: [
+      { code: 'ERR', name: 'Erro', category: 'Técnico', details: 'Falha real.', solution: 'Corrigir.' },
+      { code: 'OPT', name: 'Opcional', category: 'Conteúdo', details: 'Melhoria.', solution: 'Otimizar.' },
+      { code: 'PASS', name: 'Correto', category: 'Técnico', details: 'Texto inútil.', solution: 'Nada.' }
+    ],
+    failures: new Map([['ERR', new Set(['https://example.com/a'])], ['OPT', new Set(['https://example.com/a'])]])
+  });
+  assert.match(report, /^# SEO_AUDIT_V2/m);
+  assert.match(report, /scan: pages=2; checks=3; passed=1; optional=1; errors=1; crawl_limited=false/);
+  assert.match(report, /### ERR\|error\|Técnico\|Erro/);
+  assert.match(report, /### OPT\|optional\|Conteúdo\|Opcional/);
+  assert.doesNotMatch(report, /PASS|Texto inútil|Nada\./);
+  assert.equal(report.match(/https:\/\/example\.com\/a/g)?.length, 1);
 });
 
 test('endereços privados e protocolos impróprios são recusados', () => {
@@ -46,6 +77,46 @@ test('bootstrap devolve JSON sem analisar novamente o HTML completo', async t =>
   assert.equal(response.headers.get('content-type'), 'application/json');
   assert.equal(data.root, 'https://example.com/');
   assert.deepEqual(data.failures.map(item => item.code), ['AIX-003', 'AIX-005']);
+});
+
+test('PageSpeed usa a chave do servidor e devolve Lighthouse compacto', async t => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async input => {
+    const url = String(input);
+    assert.match(url, /key=server-key/);
+    if (url.includes('chromeuxreport')) return Response.json({ error: { message: 'not found' } }, { status: 404 });
+    return Response.json({ lighthouseResult: {
+      finalUrl: 'https://example.com/', fetchTime: '2026-08-14T12:00:00Z',
+      categories: { performance: { score: .72, auditRefs: [{ id: 'render-blocking-insight', group: 'insights' }] }, seo: { score: 1 } },
+      audits: {
+        'first-contentful-paint': { numericValue: 2_000 }, 'largest-contentful-paint': { numericValue: 4_200 },
+        'total-blocking-time': { numericValue: 300 }, 'cumulative-layout-shift': { numericValue: .12 }, 'speed-index': { numericValue: 3_000 },
+        'render-blocking-insight': { id: 'render-blocking-insight', title: 'Render blocking', score: 0, displayValue: '1,200 ms', details: { items: [{ url: 'https://example.com/app.css', wastedMs: 1_200 }] } }
+      }
+    } });
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  const request = new Request('https://audit.test/api/audit', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'performance', root: 'https://example.com/', urls: ['https://example.com/'] })
+  });
+  const response = await onRequest({ request, env: { GOOGLE_API_KEY: 'server-key' } });
+  const data = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(data.pages.length, 2);
+  assert.equal(data.pages[0].score, 72);
+  assert.equal(data.pages[0].metrics.lcpMs, 4_200);
+  assert.deepEqual(data.pages[0].audits[0], { id: 'render-blocking-insight', title: 'Render blocking', score: 0, display: '1,200 ms', resources: ['https://example.com/app.css (wastedMs=1200)'] });
+  assert.equal(data.crux, null);
+});
+
+test('PageSpeed recusa execução sem chave no servidor', async () => {
+  const request = new Request('https://audit.test/api/audit', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'performance', root: 'https://example.com/', urls: ['https://example.com/'] })
+  });
+  assert.equal((await onRequest({ request, env: {} })).status, 503);
 });
 
 test('fixture válida e mutações mínimas produzem resultados distintos', () => {
@@ -85,9 +156,40 @@ test('fixture válida e mutações mínimas produzem resultados distintos', () =
   assert.equal(conflicting.get('LOC-008'), false);
 });
 
-function page(text) {
+test('sitemaps XML, RSS, Atom e texto são aceites', () => {
+  const response = (text, contentType = 'application/xml') => ({
+    requestedUrl: 'https://example.com/sitemap', finalUrl: 'https://example.com/sitemap', status: 200,
+    headers: { 'content-type': contentType }, contentType, contentLength: text.length, bytes: new TextEncoder().encode(text),
+    text, truncated: false, redirects: [], elapsedMs: 1, error: ''
+  });
+  const samples = [
+    ['sitemap.xml', '<urlset><url><loc>https://example.com/xml</loc></url></urlset>', 'application/xml', 'urlset'],
+    ['feed.rss', '<rss><channel><item><link>https://example.com/rss</link></item></channel></rss>', 'application/rss+xml', 'rss'],
+    ['feed.atom', '<feed><entry><link href="https://example.com/atom"/></entry></feed>', 'application/atom+xml', 'atom'],
+    ['sitemap.txt', 'https://example.com/text\nhttps://example.com/second', 'text/plain', 'text']
+  ];
+  for (const [name, source, type, kind] of samples) {
+    const sitemap = parseSitemap(`https://example.com/${name}`, response(source, type));
+    assert.equal(sitemap.kind, kind);
+    assert.equal(sitemap.syntaxError, false);
+    assert.ok(sitemap.urls.length > 0);
+  }
+  assert.equal(parseSitemap('https://example.com/sitemap.xml', response('<html>erro</html>', 'text/html')).kind, 'invalid');
+});
+
+test('navegação facetada deteta parâmetros repetidos e ordenação instável', () => {
+  assert.equal(resultMap(context(page('<html lang="pt"><body>Produto</body></html>', 'https://example.com/produto?cor=azul&cor=azul'))).get('FAC-001'), false);
+  const first = page('<html lang="pt"><body>Produto</body></html>', 'https://example.com/produto?cor=azul&tamanho=m');
+  const second = page('<html lang="pt"><body>Produto</body></html>', 'https://example.com/produto?tamanho=m&cor=azul');
+  const value = context(first);
+  value.pages = [first, second];
+  value.pageResponses = new Map(value.pages.map(item => [item.url, item]));
+  assert.equal(resultMap(value).get('FAC-002'), false);
+});
+
+function page(text, url = 'https://example.com/') {
   return parsePage({
-    requestedUrl: 'https://example.com/', finalUrl: 'https://example.com/', status: 200,
+    requestedUrl: url, finalUrl: url, status: 200,
     headers: { 'content-type': 'text/html', 'content-encoding': 'gzip' }, contentType: 'text/html',
     contentLength: new TextEncoder().encode(text).length, bytes: new TextEncoder().encode(text), text,
     truncated: false, redirects: [], elapsedMs: 80, error: ''

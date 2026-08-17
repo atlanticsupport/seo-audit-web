@@ -1,6 +1,6 @@
 # Auditor SEO verificável
 
-Webapp minimalista com 273 verificações SEO determinísticas. Percorre recursivamente sitemaps, links internos e recursos em lotes, conserva a evidência no browser e suporta até 50.000 páginas por auditoria sem base de dados.
+Webapp minimalista com 275 verificações SEO determinísticas. Percorre recursivamente sitemaps XML, RSS, Atom e texto, links internos e recursos em lotes, conserva a evidência no browser e suporta até 50.000 páginas por auditoria sem base de dados.
 
 ## Executar
 

@@ -5,29 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>SEO Audit</title>
-  <meta name="description" content="Verificador técnico SEO.">
+  <meta name="description" content="Auditoria técnica, ranking e concorrência SEO.">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <main>
-    <form id="audit-form">
-      <label class="sr-only" for="url">URL do site</label>
-      <div class="url-entry">
+    <header class="topbar">
+      <form id="audit-form">
+        <label class="sr-only" for="url">URL do site</label>
         <input id="url" name="url" type="text" inputmode="url" autocomplete="url" placeholder="exemplo.com" required>
-        <button type="submit">Analisar</button>
-      </div>
-    </form>
+        <span class="form-actions">
+          <button class="primary action-button" type="submit" aria-label="Analisar" title="Analisar">
+            <svg viewBox="0 0 353.332 353.332" aria-hidden="true"><path d="M85.831 210h60a15 15 0 0 0 0-30h-60a15 15 0 0 0 0 30Z"/><path d="m348.107 327.725-30.938-30.938a73.1 73.1 0 0 0 11.995-40.121c0-35.297-25.068-64.844-58.334-71.786V125a15 15 0 0 0-4.393-10.607l-110-110A15 15 0 0 0 145.831 0h-130a15 15 0 0 0-15 15v300a15 15 0 0 0 15 15h240a72.9 72.9 0 0 0 40.127-11.998l30.937 30.936a15 15 0 1 0 21.212-21.213Zm-48.942-71.059A43.334 43.334 0 1 1 255.831 213.332a43.383 43.383 0 0 1 43.334 43.334ZM160.831 51.213 219.618 110h-58.787V51.213ZM30.831 30h100v95a15 15 0 0 0 15 15h95v44.88c-27.862 5.814-49.953 27.493-56.4 55.12h-98.6a15 15 0 0 0 0 30h97.903a72.8 72.8 0 0 0 12.983 30H30.831V30Z"/></svg>
+          </button>
+          <a id="download-report" class="icon-button action-button" aria-label="Descarregar relatório completo" title="Descarregar relatório completo" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25a.75.75 0 0 0-.75.75v10.973L9.57 11.012a.75.75 0 1 0-1.14.976l3 3.5a.75.75 0 0 0 1.14 0l3-3.5a.75.75 0 1 0-1.14-.976l-1.68 1.96V2a.75.75 0 0 0-.75-.75Z"/><path d="M14.25 9v.378a2.25 2.25 0 0 1 2.458 3.586l-3 3.5a2.25 2.25 0 0 1-3.416 0l-3-3.5A2.25 2.25 0 0 1 9.75 9.378V9H8c-2.828 0-4.243 0-5.121.879C2 10.757 2 12.172 2 15v1c0 2.828 0 4.243.879 5.121C3.757 22 5.172 22 8 22h8c2.828 0 4.243 0 5.121-.879C22 20.243 22 18.828 22 16v-1c0-2.828 0-4.243-.879-5.121C20.243 9 18.828 9 16 9h-1.75Z"/></svg>
+          </a>
+        </span>
+      </form>
+      <nav class="actions" aria-label="Integrações">
+        <button id="gsc-connect" class="gsc-button" type="button" aria-label="Ligar Google Search Console" title="Ligar Google Search Console"><img src="/gsc.png" alt=""></button>
+      </nav>
+    </header>
 
-    <div class="summary-row">
-      <section id="summary" class="summary" aria-live="polite" hidden></section>
-      <a id="download-report" class="download-report" aria-label="Descarregar relatório completo" title="Descarregar relatório completo" hidden>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25C11.5858 1.25 11.25 1.58579 11.25 2V12.9726L9.56944 11.0119C9.29988 10.6974 8.8264 10.661 8.51191 10.9306C8.19741 11.2001 8.16099 11.6736 8.43056 11.9881L11.4306 15.4881C11.573 15.6543 11.7811 15.75 12 15.75C12.2189 15.75 12.427 15.6543 12.5694 15.4881L15.5694 11.9881C15.839 11.6736 15.8026 11.2001 15.4881 10.9306C15.1736 10.661 14.7001 10.6974 14.4306 11.0119L12.75 12.9726L12.75 2C12.75 1.58579 12.4142 1.25 12 1.25Z"/>
-          <path d="M14.25 9V9.37828C14.9836 9.11973 15.8312 9.2491 16.4642 9.79167C17.4077 10.6004 17.517 12.0208 16.7083 12.9643L13.7083 16.4643C13.2808 16.963 12.6568 17.25 12 17.25C11.3431 17.25 10.7191 16.963 10.2916 16.4643L7.29163 12.9643C6.48293 12.0208 6.5922 10.6004 7.53568 9.79167C8.16868 9.2491 9.01637 9.11973 9.74996 9.37828V9H8C5.17157 9 3.75736 9 2.87868 9.87868C2 10.7574 2 12.1716 2 15V16C2 18.8284 2 20.2426 2.87868 21.1213C3.75736 22 5.17157 22 7.99999 22H16C18.8284 22 20.2426 22 21.1213 21.1213C22 20.2426 22 18.8284 22 16V15C22 12.1716 22 10.7574 21.1213 9.87868C20.2426 9 18.8284 9 16 9H14.25Z"/>
-        </svg>
-      </a>
+    <p id="notice" class="notice" aria-live="polite" hidden></p>
+    <div id="workspace" class="workspace">
+      <section class="data-panel" aria-label="Resultados da auditoria">
+        <nav class="view-tabs" role="tablist" aria-label="Vistas dos resultados">
+          <button class="view-tab active" type="button" role="tab" aria-selected="true" aria-controls="checks" data-view="checks">Checks <small id="checks-status">—</small></button>
+          <button class="view-tab" type="button" role="tab" aria-selected="false" aria-controls="opportunities" data-view="opportunities">Melhorias <small id="opportunities-status">—</small></button>
+          <button class="view-tab" type="button" role="tab" aria-selected="false" aria-controls="rankings" data-view="rankings">Posições <small id="rankings-status">—</small></button>
+          <button class="view-tab" type="button" role="tab" aria-selected="false" aria-controls="competitors" data-view="competitors">Concorrentes <small id="competitors-status">—</small></button>
+        </nav>
+        <div class="view-content">
+          <section id="checks" class="view-pane active" role="tabpanel"><div id="results" class="results" aria-label="Resultados técnicos"></div></section>
+          <section id="opportunities" class="view-pane" role="tabpanel" hidden></section>
+          <section id="rankings" class="view-pane" role="tabpanel" hidden></section>
+          <section id="competitors" class="view-pane" role="tabpanel" hidden></section>
+        </div>
+      </section>
+
+      <aside class="dashboard" aria-label="Resumo visual">
+        <section class="panel health-panel">
+          <div id="health-donut" class="donut"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="donut-track" cx="18" cy="18" r="15.9155"/><circle id="health-ring" class="donut-ring" cx="18" cy="18" r="15.9155" stroke-dasharray="0 100"/></svg><span>—</span></div>
+          <div><strong>Saúde técnica</strong><small id="health-copy">Por analisar</small></div>
+        </section>
+        <section class="panel">
+          <div class="panel-title"><strong>PageSpeed e Core Web Vitals</strong><small id="pagespeed-status">Por analisar</small></div>
+          <div class="kpis performance-kpis">
+            <div><span id="psi-mobile">—</span><small>Mobile</small></div>
+            <div><span id="psi-desktop">—</span><small>Desktop</small></div>
+            <div><span id="crux-lcp">—</span><small>LCP real</small></div>
+            <div><span id="crux-inp">—</span><small>INP real</small></div>
+            <div><span id="crux-cls">—</span><small>CLS real</small></div>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="panel-title"><strong>Pesquisa orgânica</strong><small id="gsc-period">Não ligado</small></div>
+          <div class="kpis">
+            <div><span id="kpi-clicks">—</span><small>Cliques</small></div>
+            <div><span id="kpi-impressions">—</span><small>Impressões</small></div>
+            <div><span id="kpi-ctr">—</span><small>CTR</small></div>
+            <div><span id="kpi-position">—</span><small>Posição</small></div>
+          </div>
+          <svg id="trend-chart" class="trend-chart" viewBox="0 0 420 120" role="img" aria-label="Evolução diária"><path class="grid" d="M0 30H420M0 60H420M0 90H420"/><polyline points=""/></svg>
+        </section>
+        <section class="panel">
+          <div class="panel-title"><strong>Distribuição de posições</strong><small id="ranked-count">Por analisar</small></div>
+          <div id="rank-bars" class="bars"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-title"><strong>Visibilidade concorrente</strong><small id="competitor-count">Por analisar</small></div>
+          <div id="competitor-bars" class="bars"></div>
+        </section>
+      </aside>
     </div>
-    <section id="results" class="results" aria-label="Resultados da auditoria"></section>
   </main>
   <script type="module" src="/app.js"></script>
 </body>

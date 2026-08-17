@@ -53,7 +53,7 @@ export async function collectPageBatch(root, values) {
 
 export async function collectSitemapBatch(values) {
   const urls = unique(values.map(value => publicUrl(value).href)).slice(0, SITEMAP_BATCH);
-  const responses = await Promise.all(urls.map(url => safeFetch(url, { maxBytes: 10_000_000, accept: 'application/xml,text/xml,*/*;q=0.5', forceText: true })));
+  const responses = await Promise.all(urls.map(url => safeFetch(url, { maxBytes: 10_000_000, accept: 'application/xml,text/xml,application/rss+xml,application/atom+xml,text/plain,*/*;q=0.5', forceText: true })));
   return responses.map((response, index) => parseSitemap(urls[index], response));
 }
 
@@ -119,13 +119,21 @@ export function parseRobots(response) {
 
 export function parseSitemap(url, response) {
   const text = response.text ?? '';
-  const root = text.match(/<(urlset|sitemapindex)\b/i)?.[1]?.toLowerCase() ?? '';
+  const root = text.match(/<(urlset|sitemapindex|rss|feed)\b/i)?.[1]?.toLowerCase() ?? '';
+  const textUrls = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const textSitemap = !root && textUrls.length > 0 && textUrls.every(validHttpUrl) && (/text\/plain/i.test(response.contentType) || new URL(url).pathname.endsWith('.txt'));
+  const kind = root === 'sitemapindex' ? 'index' : root === 'urlset' ? 'urlset' : root === 'rss' ? 'rss' : root === 'feed' ? 'atom' : textSitemap ? 'text' : 'invalid';
+  const urls = kind === 'rss'
+    ? [...text.matchAll(/<item\b[^>]*>[\s\S]*?<link\b[^>]*>([\s\S]*?)<\/link\s*>[\s\S]*?<\/item\s*>/gi)].map(match => decodeXml(match[1].trim()))
+    : kind === 'atom'
+      ? [...text.matchAll(/<entry\b[^>]*>[\s\S]*?<link\b([^>]*)\/?\s*>[\s\S]*?<\/entry\s*>/gi)].map(match => attributes(match[1]).href).filter(Boolean)
+      : textSitemap ? textUrls : [...text.matchAll(/<loc\b[^>]*>([\s\S]*?)<\/loc\s*>/gi)].map(match => decodeXml(match[1].trim()));
   return {
     url,
     ...publicResponse(response),
-    kind: root === 'sitemapindex' ? 'index' : root === 'urlset' ? 'urlset' : 'invalid',
-    urls: [...text.matchAll(/<loc\b[^>]*>([\s\S]*?)<\/loc\s*>/gi)].map(match => decodeXml(match[1].trim())).filter(validHttpUrl),
-    syntaxError: response.status === 200 && (!root || !/<\/\s*(urlset|sitemapindex)\s*>/i.test(text)),
+    kind,
+    urls: urls.filter(validHttpUrl),
+    syntaxError: response.status === 200 && (kind === 'invalid' || (!textSitemap && !new RegExp(`<\\/\\s*${root}\\s*>`, 'i').test(text))),
     truncated: response.truncated
   };
 }
@@ -156,6 +164,12 @@ function summarizeResponse(response, page) {
     links: page?.links ?? [],
     hreflang: page?.hreflang ?? [],
     lang: page?.htmlAttrs.lang ?? '',
+    title: page?.titles[0] ?? '',
+    h1: page?.h1[0] ?? '',
+    description: page?.descriptions[0] ?? '',
+    wordCount: page?.wordCount ?? 0,
+    imageCount: page?.images.length ?? 0,
+    structuredTypes: [...(page?.structuredByType.keys() ?? [])],
     fingerprint: page?.visibleText.length > 120 ? page.visibleText.toLowerCase().replace(/\d+/g, '#') : '',
     structured: Boolean(page?.structuredNodes.length)
   };
@@ -239,6 +253,10 @@ function squareIcon(bytes) {
 
 function decodeXml(value) {
   return value.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+}
+
+function attributes(source = '') {
+  return Object.fromEntries([...source.matchAll(/([^\s=/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g)].map(match => [match[1].toLowerCase(), decodeXml(match[2] ?? match[3] ?? match[4] ?? '')]));
 }
 
 function validHttpUrl(value) {
